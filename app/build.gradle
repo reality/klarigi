@@ -12,6 +12,10 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+
+    id 'jacoco'
+    id 'com.github.dawnwords.jacoco.badge' version '0.2.0'
+
 }
 
 repositories {
@@ -24,11 +28,21 @@ dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.7'
 
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:30.0-jre'
+    //implementation 'com.google.guava:guava:30.0-jre'
+
+    // CLI Builoder 
+    implementation 'commons-cli:commons-cli:1.4'
+
+    // OWLAPI/Elk
+    implementation 'org.semanticweb.elk:elk-owlapi:0.4.3'
+    implementation 'net.sourceforge.owlapi:owlapi-api:4.5.19'
+    implementation 'net.sourceforge.owlapi:owlapi-apibinding:4.5.19'
+    implementation 'net.sourceforge.owlapi:owlapi-impl:4.5.19'
+    implementation 'net.sourceforge.owlapi:owlapi-parsers:4.5.19'
+    implementation 'net.sourceforge.owlapi:owlapi-distribution:4.5.19'
 
     // Use the awesome Spock testing and specification framework even with Java
     testImplementation 'org.spockframework:spock-core:2.0-M4-groovy-3.0'
-    testImplementation 'junit:junit:4.13.1'
 }
 
 application {
@@ -36,7 +50,23 @@ application {
     mainClass = 'klarigi.App'
 }
 
-tasks.named('test') {
-    // Use junit platform for unit tests.
-    useJUnitPlatform()
+jacoco {
+  toolVersion = '0.8.7'
 }
+
+test {                                                                                                                                                                                                                                      
+  maxHeapSize = "6G" 
+  testLogging {
+    events "started", "skipped", "failed"
+    exceptionFormat "full"
+  }
+  finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+  dependsOn test // tests are required to run before generating the report
+  reports {
+    xml.enabled true 
+  }
+}
+

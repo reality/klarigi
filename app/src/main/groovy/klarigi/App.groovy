@@ -3,6 +3,9 @@
  */
 package klarigi
 
+// Todo, replace this with non-deprecated version
+import groovy.cli.picocli.CliBuilder
+
 class App {
   static void main(String[] args) {
     def cliBuilder = new CliBuilder(
@@ -13,14 +16,17 @@ class App {
     cliBuilder.with {
       h longOpt: 'help', 'Print this help text and exit.'
 
+      d longOpt: 'data', 'The data describing entities and associations. See documentation for format.'
+      o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).'
+
+      ic longOpt: 'information-content', 'List of classes and associated information content values.'
+
             // all options
       _ longOpt: 'out', 'Where to write the annotation results.', args: 1
       _ longOpt: 'append', 'Append output file, instead of replacing it', type: Boolean
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
-      _ longOpt: 'threads', 'Number of threads to use for query/annotation processes', type: Integer, args: 1
     }
 
-    if(!args[0]) { println "Must provide command." }
     if(args[0] == '-h' || args[0] == '--help') {
       cliBuilder.usage(); return;
     }
