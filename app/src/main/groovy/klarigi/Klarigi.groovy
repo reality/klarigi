@@ -15,18 +15,19 @@ import org.semanticweb.owlapi.manchestersyntax.renderer.*
 import org.semanticweb.owlapi.reasoner.structural.*
 
 public class Klarigi {
-  // This is a map of entities and their cluster associations
-  def groupings = [:]
-
-  // This is a map of entities and their ontology class associations
-  def associations = [:]
-
-  // Ontology query utility classes
-  def oReasoner
-  def oDataFactory
+  def data = [
+    groupings: [:],
+    associations: [:],
+    ic: [:]
+  ]
+  def ontoHelper = [
+    reasoner: null, 
+    dataFactory: null
+  ]
 
   Klarigi(o) {
     loadData(o['data'])
+    loadIc(o['ic'])
     loadOntology(o['ontology'])
   }
 
@@ -34,12 +35,24 @@ public class Klarigi {
     new File(dataFile).splitEachLine('\t') {
       def (entity, terms, group) = it
 
-      associations[entity] = terms.tokenize(';')
-
-      if(!groupings.containsKey(group)) {
-        groupings[group] = []
+      terms = terms.tokenize(';')
+      if(terms.size() > 0 && terms[0] =~ /:/) {
+        terms = terms.collect { 
+          'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+        }
       }
-      groupings[group] << entity
+      data.associations[entity] = terms
+
+      if(!data.groupings.containsKey(group)) {
+        data.groupings[group] = []
+      }
+      data.groupings[group] << entity
+    }
+  }
+
+  def loadIc(icFile) {
+    new File(icFile).splitEachLine('\t') {
+      data.ic[it[0]] = Float.parseFloat(it[1])
     }
   }
 
@@ -52,12 +65,12 @@ public class Klarigi {
     def elkFactory = new ElkReasonerFactory() // cute
     
     // Set class props
-    oDataFactory = manager.getOWLDataFactory()
-    oReasoner = elkFactory.createReasoner(ontology, config)
+    ontoHelper.dataFactory = manager.getOWLDataFactory()
+    ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
   }
 
   def explainClusters(o) {
-    def scorer = new Scorer(oDataFactory, oReasoner, groupings, associations)
+    def scorer = new Scorer(ontoHelper, data)
 
     /*
     def allExplanations = scorer.scoreClasses()

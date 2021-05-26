@@ -5,12 +5,14 @@ import spock.lang.Shared
 
 class KlarigiTest extends Specification {
 	@Shared k 
+  @Shared s
 
   def "load_klarigi"() {
     given:
       def o = [
 				'data': getClass().getResource('/patient_omim_map.txt').toURI(),
-				'ontology': getClass().getResource('/hp.owl').toURI()
+				'ontology': getClass().getResource('/hp.owl').toURI(),
+        'ic': getClass().getResource('/ic.lst').toURI()
 			]
     when:
 			k = new Klarigi(o)
@@ -20,19 +22,64 @@ class KlarigiTest extends Specification {
 
 	def "test_associations"() {
     when:
-      def p3 = ["HP:0001510", "HP:0031960"]
+      def p3 = ["http://purl.obolibrary.org/obo/HP_0001510", "http://purl.obolibrary.org/obo/HP_0031960"]
     then:
-      k.associations.size() == 20 
+      k.data.associations.size() == 20 
     then:
-      k.associations["3"] == p3
+      k.data.associations["3"] == p3
   }
 
 	def "test_groupings"() {
     when: 
       def omims = ["OMIM:604271","OMIM:172870","OMIM:615121","OMIM:275450"]
     then: 
-      k.groupings.size() == 4
+      k.data.groupings.size() == 4
     then:
-      omims.findAll { k.groupings.containsKey(it) }.size() == omims.size()
+      omims.findAll { k.data.groupings.containsKey(it) }.size() == omims.size()
 	}
+
+  def "test_ic"() {
+    when:
+      def testHp = "http://purl.obolibrary.org/obo/HP_0010593"
+      def testValue = Float.parseFloat('0.95533967') // Note that this is rounded w.r.t what's in the file.
+    then:
+      k.data.ic.size() == 15629
+    then:
+      k.data.ic[testHp] == testValue
+  }
+
+  def "test_ontology"(){
+    when:
+      k
+    then:
+      k.ontoHelper.reasoner.isConsistent() 
+  }
+
+  def "test_scorer"() {
+    when:
+      s = new Scorer(k.ontoHelper, k.data)
+    then:
+      s instanceof Scorer
+  }
+
+  def "test_scoring"() {
+    when:
+      def clusterId = "OMIM:604271"
+      def explanations = s.scoreClasses(clusterId)
+      def nonEmptyTerm = "http://purl.obolibrary.org/obo/HP_0004322" 
+      def parentTerm = "http://purl.obolibrary.org/obo/HP_0000002"
+    then:
+      explanations.size() == 205 // so it's all our 47 classes plus their transitive superclasses
+    then:
+      [nonEmptyTerm, parentTerm].each { iri ->
+        def filledExp = explanations.find { it.iri == iri }
+        filledExp.nExclusion == 1
+        filledExp.nInclusion == 0.6
+        filledExp.nIc == Float.parseFloat("0.7463796")
+        filledExp.ic == Float.parseFloat("0.7463796")
+        filledExp.exclusion == 0
+        filledExp.externalIncluded.size() == 0
+        filledExp.internalIncluded == [1,2,4]
+      }
+  }
 }
