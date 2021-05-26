@@ -1,3 +1,5 @@
+package klarigi
+
 import org.semanticweb.owlapi.model.parameters.*
 import org.semanticweb.elk.owlapi.*
 import org.semanticweb.elk.reasoner.config.*
@@ -24,13 +26,12 @@ public class Klarigi {
   def oDataFactory
 
   Klarigi(o) {
-    loadData(o['data-file'])
-    loadOntology(o['ontology-file'])
-    explainerClusters(o)
+    loadData(o['data'])
+    loadOntology(o['ontology'])
   }
 
   def loadData(dataFile) {
-    dataFile.splitEachLine('\t') {
+    new File(dataFile).splitEachLine('\t') {
       def (entity, terms, group) = it
 
       associations[entity] = terms.tokenize(';')
