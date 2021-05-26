@@ -10,10 +10,10 @@ public class Klarigi {
   def oReasoner
   def oDataFactory
 
-  Klarigi(dataFile, ontologyFile) {
-    loadData(dataFile)
-    loadOntology(ontologyFile)
-    explainerClusters()
+  Klarigi(o) {
+    loadData(o['data-file'])
+    loadOntology(o['ontology-file'])
+    explainerClusters(o)
   }
 
   def loadData(dataFile) {
@@ -29,9 +29,10 @@ public class Klarigi {
     }
   }
 
-  def explainClusters() {
+  def explainClusters(o) {
     def scorer = new Scorer(oDataFactory, oReasoner, groupings, associations)
     def allExplanations = scorer.scoreClasses()
-    def finalExplanations = StepDown.Run()
+    def coefficients = Coefficients.Generate(o)
+    def finalExplanations = StepDown.Run(coefficients)
   }
 }
