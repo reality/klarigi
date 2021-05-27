@@ -6,6 +6,7 @@ import spock.lang.Shared
 class KlarigiTest extends Specification {
 	@Shared k 
   @Shared s
+  @Shared explanations
 
   def "load_klarigi"() {
     given:
@@ -65,7 +66,7 @@ class KlarigiTest extends Specification {
   def "test_scoring"() {
     when:
       def clusterId = "OMIM:604271"
-      def explanations = s.scoreClasses(clusterId)
+      explanations = s.scoreClasses(clusterId)
       def nonEmptyTerm = "http://purl.obolibrary.org/obo/HP_0004322" 
       def parentTerm = "http://purl.obolibrary.org/obo/HP_0000002"
     then:
@@ -81,5 +82,29 @@ class KlarigiTest extends Specification {
         filledExp.externalIncluded.size() == 0
         filledExp.internalIncluded == [1,2,4]
       }
+  }
+
+  def "test_explain"() {
+    given:
+      def clusterId = "OMIM:604271"
+      def exClass = "http://purl.obolibrary.org/obo/HP_0001510" // growth delay
+      def overallInc = 100
+      def nIc = Float.parseFloat("0.7017193")
+      def inclusion = 5
+      def exclusion = 0
+      def nInclusion = 1
+      def nExclusion = 1
+      def internalIncluded = ["0","1","2","3","4"]
+    when:
+      def res = StepDown.Run(k.coefficients, clusterId, explanations, k.data)
+    then:
+      res[0][0].iri == exClass
+      res[0][0].internalIncluded == internalIncluded
+      res[0][0].inclusion == inclusion
+      res[0][0].exclusion == exclusion
+      res[0][0].nInclusion == nInclusion
+      res[0][0].nExclusion == nExclusion
+      res[1] == overallInc
+
   }
 }

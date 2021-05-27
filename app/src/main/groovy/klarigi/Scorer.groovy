@@ -58,7 +58,6 @@ public class Scorer {
       processClass(explainers, cid, it)
     }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
-    println explainers
     explainers
   }
 } 

@@ -24,11 +24,13 @@ public class Klarigi {
     reasoner: null, 
     dataFactory: null
   ]
+  def coefficients
 
   Klarigi(o) {
     loadData(o['data'])
     loadIc(o['ic'])
     loadOntology(o['ontology'])
+    coefficients = Coefficients.Generate(o)
   }
 
   def loadData(dataFile) {
@@ -69,12 +71,11 @@ public class Klarigi {
     ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
   }
 
-  def explainClusters(o) {
+  def explainClusters(o, cid) {
     def scorer = new Scorer(ontoHelper, data)
 
     /*
     def allExplanations = scorer.scoreClasses()
-    def coefficients = Coefficients.Generate(o)
     def finalExplanations = StepDown.Run(coefficients, allExplanations, groupings, associations)
     */
 

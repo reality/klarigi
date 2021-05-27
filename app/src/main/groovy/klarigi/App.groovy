@@ -21,6 +21,15 @@ class App {
 
       ic longOpt: 'information-content', 'List of classes and associated information content values.'
 
+      _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8' 
+      _ longOpt: 'min-ic', 'Min IC to use in stepdown algorithm. Default: 0.4' 
+      _ longOpt: 'max-inclusion', 'Max inclusion to use in stepdown algorithm. Default: 0.95' 
+      _ longOpt: 'min-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3' 
+      _ longOpt: 'max-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95' 
+      _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3' 
+      _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)' 
+      _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05'
+
             // all options
       _ longOpt: 'out', 'Where to write the annotation results.', args: 1
       _ longOpt: 'append', 'Append output file, instead of replacing it', type: Boolean
