@@ -67,20 +67,30 @@ class KlarigiTest extends Specification {
     when:
       def clusterId = "OMIM:604271"
       explanations = s.scoreClasses(clusterId)
-      def nonEmptyTerm = "http://purl.obolibrary.org/obo/HP_0004322" 
+      def items = [
+        [ 
+          term: "http://purl.obolibrary.org/obo/HP_0004322",
+          nIc: Float.parseFloat("0.7463796")
+        ],
+        [
+          term: "http://purl.obolibrary.org/obo/HP_0000002",
+          nIc: Float.parseFloat("0.7054534")
+        ]
+      ]
+      def nonEmptyTerm = "" 
       def parentTerm = "http://purl.obolibrary.org/obo/HP_0000002"
     then:
       explanations.size() == 205 // so it's all our 47 classes plus their transitive superclasses
     then:
-      [nonEmptyTerm, parentTerm].each { iri ->
-        def filledExp = explanations.find { it.iri == iri }
-        filledExp.nExclusion == 1
-        filledExp.nInclusion == 0.6
-        filledExp.nIc == Float.parseFloat("0.7463796")
-        filledExp.ic == Float.parseFloat("0.7463796")
-        filledExp.exclusion == 0
-        filledExp.externalIncluded.size() == 0
-        filledExp.internalIncluded == [1,2,4]
+      items.each { item ->
+        def filledExp = explanations.find { it.iri == item.term }
+        assert filledExp.nExclusion == 1
+        assert filledExp.nInclusion == 0.6
+        assert filledExp.nIc == item.nIc
+        assert filledExp.ic == item.nIc
+        assert filledExp.exclusion == 0
+        assert filledExp.externalIncluded.size() == 0
+        assert filledExp.internalIncluded == ["1","2","4"]
       }
   }
 
