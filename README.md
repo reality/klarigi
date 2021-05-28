@@ -16,7 +16,7 @@ second should be a semi-colon delimited list of ontology terms
 associated with that entity. The third should be an identifier for 
 the group that this entity is in. This can be any string.
 
-So for example, here is a small example of patients described with HPO:
+So for example, here is a small example of patients described with HPO (if you're following this as a tutorial example, save this to *data.txt*):
 
 ```
 0 HP:0001510;HP:0040315 OMIM:604271
@@ -37,5 +37,44 @@ patient. The third is the the 'group' that this patient is in - in this case,
 it is an OMIM rare disease identifier.
 
 You will need the ontology that describes your patients, such as hp.owl
-downloaded locally.
+downloaded locally. To acquire it for this tutorial example, you can run the
+following command
+
+```bash
+wget http://purl.obolibrary.org/obo/hp.owl
+```
+
+### Run
+
+So, to run the program minimally, you can type:
+
+```bash
+klarigi --data data.txt --ontology hp.owl --group OMIM:604271
+```
+
+The *--data* argument is the path to the file containing entities/groupings (as above), *--ontology* is the path to the ontology
+
+### What's it doing?
+
+So, when you run the application, let's say with the command above, here is roughly what happens
+
+1. Load the data file.
+2. Load and classify the ontology using the ELK reasoner.
+3. Obtain information content values for each ontology class associated with the entities in your data file using SML.
+4. Score all relevant classes with inclusivity/exclusivity/information content scores. Relevant classes are directly annotated entities, and all of their superclasses.
+5. Run <i>The Explanation Algorithm</i> using the scores. Generate the set of explanations for the group given by *--group*.
+
+### Options
+
+The above is the general workflow, however there are a number of command line options you can use to modify this behaviour.
+
+#### Information Content
+
+By default, information content values will be calculated every time. However, you can also provide your own information content values! All you have to do is use the *--ic* argument to pass the path to a file that contains the information content values for the classes. It simply has to be a tab-separated-values file in which the first column is the full IRI of the class, and the second is the information content value. 
+
+You can also save such a file as an output of the program using the *--save-ic myfile.txt* argument. This will save the values it calculates into a file that can be passed with *--ic* next time around. This may speed things up, especially if your ontology or data is very large.
+
+Danger Warning: if there are unmapped values in your information content file, they won't appear in explanations!
+
+Todo: Currently the IC generation method uses the Zhou method, and it is not configurable. SML supports many other methods, however, so I plan to add additional configurability.
 
