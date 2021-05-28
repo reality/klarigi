@@ -33,6 +33,11 @@ dependencies {
     // CLI Builoder 
     implementation 'commons-cli:commons-cli:1.4'
 
+    implementation group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.30'
+    configurations.all {
+       exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+       }
+    
     // OWLAPI/Elk
     implementation 'org.semanticweb.elk:elk-owlapi:0.4.3'
     implementation 'net.sourceforge.owlapi:owlapi-api:4.5.19'
@@ -72,4 +77,3 @@ jacocoTestReport {
     xml.enabled true 
   }
 }
-

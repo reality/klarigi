@@ -14,6 +14,10 @@ import org.semanticweb.owlapi.search.*
 import org.semanticweb.owlapi.manchestersyntax.renderer.*
 import org.semanticweb.owlapi.reasoner.structural.*
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
+
 public class Klarigi {
   def data = [
     groupings: [:],
@@ -25,45 +29,84 @@ public class Klarigi {
     dataFactory: null
   ]
   def coefficients
+  def verbose
 
   Klarigi(o) {
     loadData(o['data'])
-    loadIc(o['ic'])
     loadOntology(o['ontology'])
+    loadIc(o['ic'], o['ontology'], o['save-ic'])
     coefficients = Coefficients.Generate(o)
+    verbose = o['verbose']
   }
 
   def loadData(dataFile) {
-    new File(dataFile).splitEachLine('\t') {
-      def (entity, terms, group) = it
+    try {
+      new File(dataFile).splitEachLine('\t') {
+        def (entity, terms, group) = it
 
-      terms = terms.tokenize(';')
-      if(terms.size() > 0 && terms[0] =~ /:/) {
-        terms = terms.collect { 
-          'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+        terms = terms.tokenize(';')
+        if(terms.size() > 0 && terms[0] =~ /:/) {
+          terms = terms.collect { 
+            'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+          }
         }
-      }
-      data.associations[entity] = terms
+        data.associations[entity] = terms
 
-      if(!data.groupings.containsKey(group)) {
-        data.groupings[group] = []
+        if(!data.groupings.containsKey(group)) {
+          data.groupings[group] = []
+        }
+        data.groupings[group] << entity
       }
-      data.groupings[group] << entity
+    } catch(e) {
+      HandleError(e, verbose, "Error loading data file ($dataFile)")
     }
   }
 
-  def loadIc(icFile) {
-    new File(icFile).splitEachLine('\t') {
-      data.ic[it[0]] = Float.parseFloat(it[1])
+  def loadIc(icFile, ontologyFile, saveIc) {
+    if(icFile) {
+      try {
+      new File(icFile).splitEachLine('\t') {
+        data.ic[it[0]] = Float.parseFloat(it[1])
+      }
+      } catch(e) {
+        HandleError(e, verbose, "Error loading information content file ($icFile)")
+      }
+    } else {
+      try {
+        def icFactory = new InformationContent(ontologyFile)
+        def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
+        allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
+        data.ic = icFactory.getInformationContent(allClasses)
+      } catch(e) {
+        HandleError(e, verbose, "Error calculating information content values")
+      }
+    }
+
+    if(saveIc) {
+      try {
+        InformationContent.Write(data.ic, saveIc)
+      } catch(e) {
+        HandleError(e, verbose, "Error saving information content values ($saveIc)")
+      }
     }
   }
 
   // Load and classify the ontology with Elk
   def loadOntology(ontologyFile) { 
+
+    // this is so abs9olutely ridiculous
+    Logger.getLogger(ElkReasoner.class).setLevel(Level.OFF);
+    List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
+    loggers.add(LogManager.getRootLogger());
+    for ( Logger logger : loggers ) {
+        logger.setLevel(Level.OFF);
+        }
+
+
     def manager = OWLManager.createOWLOntologyManager()
     def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
-    def progressMonitor = new ConsoleProgressMonitor()
-    def config = new SimpleConfiguration(progressMonitor)
+    //def progressMonitor = new ConsoleProgressMonitor()
+    def config = new SimpleConfiguration()
     def elkFactory = new ElkReasonerFactory() // cute
     
     // Set class props
@@ -71,14 +114,25 @@ public class Klarigi {
     ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
   }
 
-  def explainClusters(o, cid) {
+  def explainCluster(cid) {
     def scorer = new Scorer(ontoHelper, data)
+    def candidates = scorer.scoreClasses(cid)
+    def res = StepDown.Run(coefficients, cid, candidates, data)
 
-    /*
-    def allExplanations = scorer.scoreClasses()
-    def finalExplanations = StepDown.Run(coefficients, allExplanations, groupings, associations)
-    */
+    StepDown.Print(cid, res)
+  }
 
-    // Now we print
+  def explainAllClusters() {
+    data.groupings.each { g, v ->
+      explainCluster(g)
+    }
+  }
+
+  static def HandleError(e, verbose, msg) {
+    println msg + ': ' + e.getMessage()
+    if(verbose) {
+      e.printStackTrace()
+    }
+    System.exit(1)
   }
 }

@@ -115,6 +115,5 @@ class KlarigiTest extends Specification {
       res[0][0].nInclusion == nInclusion
       res[0][0].nExclusion == nExclusion
       res[1] == overallInc
-
   }
 }

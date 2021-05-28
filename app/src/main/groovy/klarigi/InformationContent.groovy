@@ -80,4 +80,8 @@ public class InformationContent {
       [(c):engine.getIC(icConf, cTerm)]
     }
   }
+
+  static def Write(ic, path) {
+    new File(path).text = ic.collect { k, v -> "$k\t$v" }.join('\n')
+  }
 }

@@ -15,7 +15,7 @@ public class Coefficients {
 
     DEFAULTS.each { k, v ->
       def optKey = k.replaceAll('_', '-').toLowerCase() // heh
-      if(o.containsKey(optKey)) {
+      if(o[optKey]) {
         c[k] = o[optKey]
       } else {
         c[k] = v
