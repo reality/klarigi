@@ -49,7 +49,7 @@ wget http://purl.obolibrary.org/obo/hp.owl
 So, to run the program minimally, you can type:
 
 ```bash
-klarigi --data data.txt --ontology hp.owl --group OMIM:604271
+./klarigi --data data.txt --ontology hp.owl --group OMIM:604271
 ```
 
 The *--data* argument is the path to the file containing entities/groupings (as above), *--ontology* is the path to the ontology
@@ -77,4 +77,8 @@ You can also save such a file as an output of the program using the *--save-ic m
 Danger Warning: if there are unmapped values in your information content file, they won't appear in explanations!
 
 Todo: Currently the IC generation method uses the Zhou method, and it is not configurable. SML supports many other methods, however, so I plan to add additional configurability.
+
+#### Group
+
+We can use the *--group* argument to tell it which grouping to provide an explanation for. If you don't pass this argument, or pass *--group \**, then it will give you explanations for all of the groups described in your data file.
 
