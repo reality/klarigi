@@ -80,7 +80,7 @@ public class InformationContent {
       try {
         def cTerm = factory.getURI(c)
         res[c] = engine.getIC(icConf, cTerm)
-      } catch(e) {}
+      } catch(e) { e.printStackTrace() }
     }
     res
   }

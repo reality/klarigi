@@ -32,9 +32,6 @@ public class Scorer {
 		ontoHelper.reasoner.getSuperClasses(ce, true).each { n ->
 			n.getEntities().each { sc ->
 				def strc = sc.getIRI().toString()
-        /*if(limitExpToFacet && limitFacet && !fMap[limitFacet].contains(strc)) {
-          return; 
-        } TODO: add facet stuff to this implementation */
 				processClass(explainers, cid, strc)
 			}
 		}
@@ -59,5 +56,11 @@ public class Scorer {
     }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
     explainers
+  }
+
+  static def Write(c, fName) {
+    new File(fName).text = "iri\tinclusivity\texclusivity\tspecificity\n" + c.collect {
+      "${it.iri}\t${it.nInclusion}\t${it.nExclusion}\t${it.nIc}"
+    }.join('\n')
   }
 } 

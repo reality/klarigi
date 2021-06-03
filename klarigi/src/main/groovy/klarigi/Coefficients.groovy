@@ -16,7 +16,7 @@ public class Coefficients {
     DEFAULTS.each { k, v ->
       def optKey = k.replaceAll('_', '-').toLowerCase() // heh
       if(o[optKey]) {
-        c[k] = o[optKey]
+        c[k] = new BigDecimal(o[optKey])
       } else {
         c[k] = v
       }

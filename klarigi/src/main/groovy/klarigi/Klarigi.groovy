@@ -45,7 +45,7 @@ public class Klarigi {
         def (entity, terms, group) = it
 
         terms = terms.tokenize(';')
-        if(terms.size() > 0 && terms[0] =~ /:/) {
+        if(terms.size() > 0 && terms[0] =~ /:/ && terms[0].indexOf('http') == -1) { // stupid
           terms = terms.collect { 
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
@@ -99,9 +99,8 @@ public class Klarigi {
     List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
     loggers.add(LogManager.getRootLogger());
     for ( Logger logger : loggers ) {
-        logger.setLevel(Level.OFF);
-        }
-
+      logger.setLevel(Level.OFF);
+    }
 
     def manager = OWLManager.createOWLOntologyManager()
     def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
@@ -114,17 +113,28 @@ public class Klarigi {
     ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
   }
 
-  def explainCluster(cid) {
+  def explainCluster(cid, outputScores) {
     def scorer = new Scorer(ontoHelper, data)
     def candidates = scorer.scoreClasses(cid)
-    def res = StepDown.Run(coefficients, cid, candidates, data)
 
+    println "$cid: Scoring completed. Candidates: ${candidates.size()}"
+
+    if(outputScores) {
+      try {
+        Scorer.Write(candidates, 'scores-'+cid+'.lst')
+      } catch(e) {
+        HandleError(e, verbose, "Error saving information content values ($saveIc)")
+      }
+    }
+
+
+    def res = StepDown.Run(coefficients, cid, candidates, data)
     StepDown.Print(cid, res)
   }
 
-  def explainAllClusters() {
+  def explainAllClusters(outputScores) {
     data.groupings.each { g, v ->
-      explainCluster(g)
+      explainCluster(g, outputScores)
     }
   }
 

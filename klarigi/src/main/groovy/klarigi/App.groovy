@@ -25,14 +25,16 @@ class App {
 
       g longOpt: 'group', 'The group to explain.', args: 1
 
-      _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8' 
-      _ longOpt: 'min-ic', 'Min IC to use in stepdown algorithm. Default: 0.4' 
-      _ longOpt: 'max-inclusion', 'Max inclusion to use in stepdown algorithm. Default: 0.95' 
-      _ longOpt: 'min-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3' 
-      _ longOpt: 'max-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95' 
-      _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3' 
-      _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)' 
-      _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05'
+      _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
+      _ longOpt: 'min-ic', 'Min IC to use in stepdown algorithm. Default: 0.4', args: 1
+      _ longOpt: 'max-inclusion', 'Max inclusion to use in stepdown algorithm. Default: 0.95', args: 1
+      _ longOpt: 'min-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3', args: 1
+      _ longOpt: 'max-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
+      _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
+      _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
+      _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
+
+      _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
 
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
     }
@@ -51,9 +53,9 @@ class App {
 
     def k = new Klarigi(o)
     if(!o['group'] || (o['group'] && o['group'] == '*')) {
-      k.explainAllClusters()
+      k.explainAllClusters(o['output-scores'])
     } else {
-      k.explainCluster(o['group'])
+      k.explainCluster(o['group'], o['output-scores'])
     }
   }
 }
