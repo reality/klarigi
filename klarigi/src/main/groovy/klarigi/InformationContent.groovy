@@ -75,10 +75,14 @@ public class InformationContent {
   }
 
   def getInformationContent(cList) {
-    cList.collectEntries { c ->
-      def cTerm = factory.getURI(c)
-      [(c):engine.getIC(icConf, cTerm)]
+    def res = [:]
+    cList.each { c ->
+      try {
+        def cTerm = factory.getURI(c)
+        res[c] = engine.getIC(icConf, cTerm)
+      } catch(e) {}
     }
+    res
   }
 
   static def Write(ic, path) {
