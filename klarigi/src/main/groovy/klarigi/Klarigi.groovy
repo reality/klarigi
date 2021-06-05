@@ -26,7 +26,8 @@ public class Klarigi {
   ]
   def ontoHelper = [
     reasoner: null, 
-    dataFactory: null
+    dataFactory: null,
+    labels: null
   ]
   def coefficients
   def verbose
@@ -93,24 +94,41 @@ public class Klarigi {
 
   // Load and classify the ontology with Elk
   def loadOntology(ontologyFile) { 
-
-    // this is so abs9olutely ridiculous
+    // this is so abs9olutely ridiculous (stolen from stackoverflow somewhere)
     Logger.getLogger(ElkReasoner.class).setLevel(Level.OFF);
     List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
     loggers.add(LogManager.getRootLogger());
-    for ( Logger logger : loggers ) {
+    for(Logger logger : loggers) {
       logger.setLevel(Level.OFF);
     }
 
+    // load ontology
     def manager = OWLManager.createOWLOntologyManager()
     def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
     //def progressMonitor = new ConsoleProgressMonitor()
     def config = new SimpleConfiguration()
     def elkFactory = new ElkReasonerFactory() // cute
-    
-    // Set class props
+
+    // load labels
+    def labels = [:]
+    ontology.getClassesInSignature(true).each { cl ->
+      def iri = cl.getIRI().toString()
+      EntitySearcher.getAnnotations(cl, ontology).each { anno ->
+        def property = anno.getProperty()
+        OWLAnnotationValue val = anno.getValue()
+        if(val instanceof OWLLiteral) {
+          def literal = val.getLiteral()
+          if(property.isLabel() && !labels.containsKey(iri)) {
+            labels[iri] = literal
+          }
+        }
+      }
+    }
+   
+    // Set class props (reasoning also performed here)
     ontoHelper.dataFactory = manager.getOWLDataFactory()
     ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
+    ontoHelper.labels = labels
   }
 
   def explainCluster(cid, outputScores) {
@@ -129,7 +147,7 @@ public class Klarigi {
 
 
     def res = StepDown.Run(coefficients, cid, candidates, data)
-    StepDown.Print(cid, res)
+    StepDown.Print(cid, res, ontoHelper.labels)
   }
 
   def explainAllClusters(outputScores) {

@@ -43,13 +43,13 @@ public class StepDown {
     return stepDown(candidates, c.MAX_IC, c.MAX_EXCLUSION, c.MAX_INCLUSION, c.MAX_TOTAL_INCLUSION)
   }
 
-  static def Print(cid, res) {
+  static def Print(cid, res, labels) {
     println "----------------"
     println "Group: $cid"
     println "Overall inclusion: ${res[1]}%"
     println "Explanatory classes:"
     res[0].each { z ->
-      println "  IRI: ${z.iri}, Inclusivity: ${z.nInclusion}, Exclusivity: ${z.nExclusion}, IC: ${z.nIc}"
+      println "  IRI: ${labels[z.iri]} (${z.iri}), Inclusivity: ${z.nInclusion}, Exclusivity: ${z.nExclusion}, IC: ${z.nIc}"
     }
     println "----------------"
     println ""
