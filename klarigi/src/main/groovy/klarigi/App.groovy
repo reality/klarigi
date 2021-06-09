@@ -39,6 +39,7 @@ class App {
 
       _ longOpt: 'latex', 'Output the results in LaTeX table format', type: Boolean
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
+      _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
 
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
     }
@@ -58,11 +59,11 @@ class App {
     def k = new Klarigi(o)
     if(!o['group'] || (o['group'] && o['group'] == '*')) {
       k.explainAllClusters(o['output-scores']).each {
-        k.output(it.cluster, it.results, o['latex'], o['output'])
+        k.output(it.cluster, it.results, o['latex'], o['print-members'], o['output'])
       }
     } else {
       def r = k.explainCluster(o['group'], o['output-scores'])
-      k.output(o['group'], r, o['latex'], o['output'])
+      k.output(o['group'], r, o['latex'], o['print-members'], o['output'])
     }
   }
 }

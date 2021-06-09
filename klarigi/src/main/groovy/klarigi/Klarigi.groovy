@@ -158,12 +158,12 @@ public class Klarigi {
     }
   }
 
-  def output(cid, results, latex, toFile) {
+  def output(cid, results, latex, printMembers, toFile) {
     def cSize = data.groupings[cid].size()
     if(latex) {
       StepDown.PrintLaTeX(cid, results, ontoHelper.labels, cSize, toFile)
     } else {
-      StepDown.Print(cid, results, ontoHelper.labels, cSize, toFile)
+      StepDown.Print(cid, results, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
     }
   }
 
