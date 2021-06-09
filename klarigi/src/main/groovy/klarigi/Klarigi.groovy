@@ -35,9 +35,13 @@ public class Klarigi {
   Klarigi(o) {
     loadData(o['data'])
     loadOntology(o['ontology'])
-    loadIc(o['ic'], o['ontology'], o['save-ic'])
+    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'])
     coefficients = Coefficients.Generate(o)
     verbose = o['verbose']
+
+    if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
+      new File(o['output']).text = ''
+    }
   }
 
   def loadData(dataFile) {
@@ -63,7 +67,7 @@ public class Klarigi {
     }
   }
 
-  def loadIc(icFile, ontologyFile, saveIc) {
+  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc) {
     if(icFile) {
       try {
       new File(icFile).splitEachLine('\t') {
@@ -74,7 +78,7 @@ public class Klarigi {
       }
     } else {
       try {
-        def icFactory = new InformationContent(ontologyFile)
+        def icFactory = new InformationContent(ontologyFile, annotFile, resnikIc)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
         data.ic = icFactory.getInformationContent(allClasses)
@@ -145,14 +149,21 @@ public class Klarigi {
       }
     }
 
-
-    def res = StepDown.Run(coefficients, cid, candidates, data)
-    StepDown.Print(cid, res, ontoHelper.labels)
+    StepDown.Run(coefficients, cid, candidates, data)
   }
 
   def explainAllClusters(outputScores) {
-    data.groupings.each { g, v ->
-      explainCluster(g, outputScores)
+    data.groupings.collect { g, v ->
+      [ cluster: g, results: explainCluster(g, outputScores) ]
+    }
+  }
+
+  def output(cid, results, latex, toFile) {
+    def cSize = data.groupings[cid].size()
+    if(latex) {
+      StepDown.PrintLaTeX(cid, results, ontoHelper.labels, cSize, toFile)
+    } else {
+      StepDown.Print(cid, results, ontoHelper.labels, cSize, toFile)
     }
   }
 

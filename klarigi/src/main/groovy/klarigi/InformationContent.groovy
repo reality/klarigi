@@ -51,6 +51,10 @@ public class InformationContent {
   private factory
 
   InformationContent(ontologyPath) {
+    this(ontologyPath, false, false)
+  }
+
+  InformationContent(ontologyPath, dataPath, annotIC) {
     factory = URIFactoryMemory.getSingleton()
 
     /*def graphURI = factory.getURI('http://purl.obolibrary.org/obo/HP_')
@@ -65,12 +69,21 @@ public class InformationContent {
 
     def gConf = new GraphConf()
     gConf.addGDataConf(dataConf)
+
+    def icMeasure = DEFAULT_IC
+    if(annotIC) {
+      gConf.addGDataConf(new GDataConf(GFormat.TSV_ANNOT, dataPath));
+    }
     //gConf.addGAction(actionRerootConf)
 
     GraphLoaderGeneric.load(gConf, graph)
     def roots = new ValidatorDAG().getTaxonomicRoots(graph)
 
     icConf = new IC_Conf_Topo(DEFAULT_IC)
+    if(annotIC) {
+      icConf = new IC_Conf_Corpus(SMConstants.FLAG_IC_ANNOT_RESNIK_1995_NORMALIZED)
+    }
+
     engine = new SM_Engine(graph)
   }
 
@@ -80,7 +93,7 @@ public class InformationContent {
       try {
         def cTerm = factory.getURI(c)
         res[c] = engine.getIC(icConf, cTerm)
-      } catch(e) { e.printStackTrace() }
+      } catch(e) { println 'Warning: ' + e.getMessage() }
     }
     res
   }

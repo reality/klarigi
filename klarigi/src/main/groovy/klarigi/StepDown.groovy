@@ -43,15 +43,38 @@ public class StepDown {
     return stepDown(candidates, c.MAX_IC, c.MAX_EXCLUSION, c.MAX_INCLUSION, c.MAX_TOTAL_INCLUSION)
   }
 
-  static def Print(cid, res, labels) {
-    println "----------------"
-    println "Group: $cid"
-    println "Overall inclusion: ${res[1]}%"
-    println "Explanatory classes:"
+  static def Print(cid, res, labels, s, toFile) {
+    def out = []
+    out << "----------------"
+    out << "Group: $cid ($s members)"
+    out << "Overall inclusion: ${res[1]}%"
+    out << "Explanatory classes:"
     res[0].each { z ->
-      println "  IRI: ${labels[z.iri]} (${z.iri}), Inclusivity: ${z.nInclusion}, Exclusivity: ${z.nExclusion}, IC: ${z.nIc}"
+      out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusivity: ${z.nInclusion}, Exclusivity: ${z.nExclusion}, IC: ${z.nIc}"
     }
-    println "----------------"
-    println ""
+    out << "----------------"
+    out << ""
+    out = out.join('\n')
+
+    if(toFile) {
+      new File(toFile).text += '\n' + out 
+    } else {
+      println out
+    }
+  }
+
+  static def PrintLaTeX(cid, res, labels, s, toFile) {
+    def out = []
+    out << "{\\bf Group: $cid ($s members), overall inclusivity: ${res[1].toDouble().round(2)})} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    res[0].sort { -it.nIc }.each {
+      out << "${labels[it.iri]} (HP:${it.iri.tokenize('_')[1]}) & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+    }
+    out = out.join('\n')
+
+    if(toFile) {
+      new File(toFile).text += '\n' + out 
+    } else {
+      println out
+    }
   }
 }

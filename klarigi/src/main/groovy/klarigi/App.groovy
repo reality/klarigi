@@ -20,6 +20,7 @@ class App {
       d longOpt: 'data', 'The data describing entities and associations. See documentation for format.', args: 1
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
 
+      ri longOpt: 'resnik-ic', 'Use Resnik annotation frequency for information content calculation', type: Boolean
       ic longOpt: 'ic', 'List of classes and associated information content values.', args: 1
       _ longOpt: 'save-ic', 'Save the IC values to the given file', args:1
 
@@ -35,6 +36,9 @@ class App {
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
+
+      _ longOpt: 'latex', 'Output the results in LaTeX table format', type: Boolean
+      _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
 
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
     }
@@ -53,9 +57,12 @@ class App {
 
     def k = new Klarigi(o)
     if(!o['group'] || (o['group'] && o['group'] == '*')) {
-      k.explainAllClusters(o['output-scores'])
+      k.explainAllClusters(o['output-scores']).each {
+        k.output(it.cluster, it.results, o['latex'], o['output'])
+      }
     } else {
-      k.explainCluster(o['group'], o['output-scores'])
+      def r = k.explainCluster(o['group'], o['output-scores'])
+      k.output(o['group'], r, o['latex'], o['output'])
     }
   }
 }
