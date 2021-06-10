@@ -59,8 +59,8 @@ public class Scorer {
   }
 
   static def Write(c, fName) {
-    new File(fName).text = "iri\tinclusivity\texclusivity\tspecificity\n" + c.collect {
-      "${it.iri}\t${it.nInclusion}\t${it.nExclusion}\t${it.nIc}"
+    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tspecificity\n" + c.collect {
+      "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nIc}"
     }.join('\n')
   }
 } 
