@@ -54,7 +54,7 @@ public class InformationContent {
     this(ontologyPath, false, false)
   }
 
-  InformationContent(ontologyPath, dataPath, annotIC) {
+  InformationContent(ontologyPath, dataPath, annotIC, turtle) {
     factory = URIFactoryMemory.getSingleton()
 
     /*def graphURI = factory.getURI('http://purl.obolibrary.org/obo/HP_')
@@ -63,7 +63,13 @@ public class InformationContent {
 
     G graph = new GraphMemory()
 
-    def dataConf = new GDataConf(GFormat.RDF_XML, ontologyPath)
+    def dataConf
+    if(turtle) {
+      dataConf = new GDataConf(GFormat.TURTLE, ontologyPath)
+    } else {
+      dataConf = new GDataConf(GFormat.RDF_XML, ontologyPath)
+    }
+
     //def actionRerootConf = new GAction(GActionType.REROOTING)
     //actionRerootConf.addParameter("root_uri", "http://purl.obolibrary.org/obo/HP_0000001"); // phenotypic abnormality
 

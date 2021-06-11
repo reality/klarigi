@@ -35,7 +35,7 @@ public class Klarigi {
   Klarigi(o) {
     loadData(o['data'])
     loadOntology(o['ontology'])
-    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'])
+    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'])
     coefficients = Coefficients.Generate(o)
     verbose = o['verbose']
 
@@ -67,7 +67,7 @@ public class Klarigi {
     }
   }
 
-  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc) {
+  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle) {
     if(icFile) {
       try {
       new File(icFile).splitEachLine('\t') {
@@ -78,7 +78,7 @@ public class Klarigi {
       }
     } else {
       try {
-        def icFactory = new InformationContent(ontologyFile, annotFile, resnikIc)
+        def icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
         data.ic = icFactory.getInformationContent(allClasses)
@@ -122,7 +122,7 @@ public class Klarigi {
         OWLAnnotationValue val = anno.getValue()
         if(val instanceof OWLLiteral) {
           def literal = val.getLiteral()
-          if(property.isLabel() && !labels.containsKey(iri)) {
+          if((property.isLabel() || property.toString() == "<http://www.w3.org/2004/02/skos/core#prefLabel>") && !labels.containsKey(iri)) {
             labels[iri] = literal
           }
         }

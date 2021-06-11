@@ -19,6 +19,7 @@ class App {
 
       d longOpt: 'data', 'The data describing entities and associations. See documentation for format.', args: 1
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
+      _ longOpt: 'turtle', 'Indicates that the ontology is a Turtle ontology (needed for calculating IC...)', type: Boolean
 
       ri longOpt: 'resnik-ic', 'Use Resnik annotation frequency for information content calculation', type: Boolean
       ic longOpt: 'ic', 'List of classes and associated information content values.', args: 1

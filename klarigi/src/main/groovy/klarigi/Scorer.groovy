@@ -1,6 +1,9 @@
 package klarigi
 
 import org.semanticweb.owlapi.model.IRI 
+import java.util.concurrent.*
+import groovyx.gpars.*
+import groovyx.gpars.GParsPool
 
 public class Scorer {
   private def ontoHelper
@@ -50,9 +53,11 @@ public class Scorer {
 
   def scoreClasses(cid) {
     def classList = data.associations.collect { k, v -> v }.flatten().unique(false) // all classes used in entity descriptions
-    def explainers = [:]
-    classList.each {
-      processClass(explainers, cid, it)
+    ConcurrentHashMap explainers = [:]
+    GParsPool.withPool(20) { p ->
+      classList.eachParallel {
+        processClass(explainers, cid, it)
+      }
     }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
     explainers
