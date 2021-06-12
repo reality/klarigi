@@ -11,7 +11,7 @@ public class StepDown {
         } 
         //println ef
         totalCoverage = ((ef.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-        def totalExclusion = 1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size())) * 100)
+        def totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
         //println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         if(totalCoverage <= (totalInclusionCutoff*100)) {
           if(inclusionCutoff <= c.MIN_INCLUSION) {
@@ -69,10 +69,12 @@ public class StepDown {
 
   static def PrintLaTeX(cid, res, labels, s, toFile) {
     def out = []
-    out << "{\\bf Group: $cid ($s members), \\\\ overall inclusivity: ${res[1].toDouble().round(2)}) \\\\ overall exclusivity: ${res[2].toDouble().round(2)}} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    out << "{\\bf Group: $cid ($s members)} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
     res[0].sort { -it.nIc }.each {
       out << "${labels[it.iri]} (HP:${it.iri.tokenize('_')[1]}) & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
     }
+    out << "{\\em Overall} & ${res[2].toDouble().round(2)} & ${res[1].toDouble().round(2)} & - \\\\ "
+    out << "\\hline"
     out = out.join('\n')
 
     if(toFile) {

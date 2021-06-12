@@ -53,12 +53,12 @@ public class Scorer {
 
   def scoreClasses(cid) {
     def classList = data.associations.collect { k, v -> v }.flatten().unique(false) // all classes used in entity descriptions
-    ConcurrentHashMap explainers = [:]
-    GParsPool.withPool(20) { p ->
-      classList.eachParallel {
+    def explainers = [:]
+    //GParsPool.withPool(4) { p ->
+      classList.each {
         processClass(explainers, cid, it)
       }
-    }
+    //}
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
     explainers
   }
