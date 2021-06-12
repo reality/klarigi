@@ -71,7 +71,7 @@ public class StepDown {
     def out = []
     out << "{\\bf Group: $cid ($s members)} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
     res[0].sort { -it.nIc }.each {
-      out << "${labels[it.iri]} (HP:${it.iri.tokenize('_')[1]}) & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+      out << "${labels[it.iri]} (${it.iri}) & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
     }
     out << "{\\em Overall} & ${res[2].toDouble().round(2)} & ${res[1].toDouble().round(2)} & - \\\\ "
     out << "\\hline"
