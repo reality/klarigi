@@ -50,11 +50,11 @@ public class StepDown {
     if(printMembers) {
       out << "Members: " + members.join(', ')
     }
-    out << "Overall inclusion: ${res[1]}%"
-    out << "Overall exclusion: ${res[2]}%"
+    out << "Overall inclusion: ${res[1].toDouble().round(2)}%"
+    out << "Overall exclusion: ${res[2].toDouble().round(2)}%"
     out << "Explanatory classes:"
     res[0].each { z ->
-      out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusivity: ${z.nInclusion}, Exclusivity: ${z.nExclusion}, IC: ${z.nIc}"
+      out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusivity: ${z.nInclusion.toDouble().round(2)}, Exclusivity: ${z.nExclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
     }
     out << "----------------"
     out << ""
