@@ -118,6 +118,7 @@ public class InformationContent {
         if(results.containsKey(k2) && results[k2].containsKey(k1)) {
           results[k1][k2] = results[k2][k1] 
         } else {
+          try {
           results[k1][k2] = engine.compare(smConfGroupwise, smConfPairwise,
                             v1.collect { 
                               factory.getURI(it)
@@ -125,6 +126,7 @@ public class InformationContent {
                             v2.collect { 
                               factory.getURI(it)
                             }.findAll { graph.containsVertex(it) }.toSet())
+          } catch(e) { results[k1][k2] = 0 }
         }
       }
     }
