@@ -45,7 +45,12 @@ public class Scorer {
       .collect { k, v ->
         v.nIc = v.ic // TODO this depends on an already normalised IC value...
         v.nInclusion = v.inclusion / data.groupings[cid].size()
-        v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
+
+        v.nExclusion = 1
+        if(data.groupings.size() > 1) {
+          v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
+        }
+
         v.iri = k 
         v
       }

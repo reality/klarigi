@@ -17,6 +17,8 @@ class App {
     cliBuilder.with {
       h longOpt: 'help', 'Print this help text and exit.'
 
+      _ longOpt: 'similarity-mode', 'Calculate semantic similarity instead of characterising groups', type: Boolean
+
       d longOpt: 'data', 'The data describing entities and associations. See documentation for format.', args: 1
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
       _ longOpt: 'turtle', 'Indicates that the ontology is a Turtle ontology (needed for calculating IC...)', type: Boolean
@@ -58,13 +60,17 @@ class App {
     }
 
     def k = new Klarigi(o)
-    if(!o['group'] || (o['group'] && o['group'] == '*')) {
-      k.explainAllClusters(o['output-scores']).each {
-        k.output(it.cluster, it.results, o['latex'], o['print-members'], o['output'])
+    if(!o['similarity-mode']) {
+      if(!o['group'] || (o['group'] && o['group'] == '*')) {
+        k.explainAllClusters(o['output-scores']).each {
+          k.output(it.cluster, it.results, o['latex'], o['print-members'], o['output'])
+        }
+      } else {
+        def r = k.explainCluster(o['group'], o['output-scores'])
+        k.output(o['group'], r, o['latex'], o['print-members'], o['output'])
       }
     } else {
-      def r = k.explainCluster(o['group'], o['output-scores'])
-      k.output(o['group'], r, o['latex'], o['print-members'], o['output'])
+      k.genSim(o['output'])
     }
   }
 }

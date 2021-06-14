@@ -31,6 +31,7 @@ public class Klarigi {
   ]
   def coefficients
   def verbose
+  def icFactory
 
   Klarigi(o) {
     loadData(o['data'])
@@ -78,7 +79,7 @@ public class Klarigi {
       }
     } else {
       try {
-        def icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle)
+        icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
         data.ic = icFactory.getInformationContent(allClasses)
@@ -156,6 +157,15 @@ public class Klarigi {
     data.groupings.collect { g, v ->
       [ cluster: g, results: explainCluster(g, outputScores) ]
     }
+  }
+
+  def genSim(toFile) {
+    if(!icFactory) {
+      println "Error: IC class not loaded (--similarity and --ic are not compatible)"
+      System.exit(1)
+    }
+    def results = icFactory.compareEntities(data.associations)
+    InformationContent.WriteSimilarity(results, toFile)
   }
 
   def output(cid, results, latex, printMembers, toFile) {

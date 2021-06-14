@@ -11,7 +11,10 @@ public class StepDown {
         } 
         //println ef
         totalCoverage = ((ef.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-        def totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
+        def totalExclusion = 100
+        if(data.groupings.size() > 1) {
+          totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
+        }
         //println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         if(totalCoverage <= (totalInclusionCutoff*100)) {
           if(inclusionCutoff <= c.MIN_INCLUSION) {

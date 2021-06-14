@@ -49,6 +49,7 @@ public class InformationContent {
   private engine
   private icConf
   private factory
+  private G graph
 
   InformationContent(ontologyPath) {
     this(ontologyPath, false, false)
@@ -61,7 +62,7 @@ public class InformationContent {
     factory.loadNamespacePrefix("HP", graphURI.toString());
     G graph = new GraphMemory(graphURI)*/
 
-    G graph = new GraphMemory()
+    graph = new GraphMemory()
 
     def dataConf
     if(turtle) {
@@ -102,6 +103,51 @@ public class InformationContent {
       } catch(e) { println 'Warning: ' + e.getMessage() }
     }
     res
+  }
+
+	// this should really go to a diff class
+  def compareEntities(assoc) {
+    def smConfPairwise = new SMconf(SMConstants.FLAG_SIM_PAIRWISE_DAG_NODE_RESNIK_1995, icConf)
+    def smConfGroupwise = new SMconf(SMConstants.FLAG_SIM_GROUPWISE_BMA, icConf)
+
+    def results = [:]
+		assoc.each { k1, v1 ->
+      if(!results.containsKey(k1)) { results[k1] = [:] }
+      assoc.each { k2, v2 ->
+        if(k1 == k2) { return; }
+        if(results.containsKey(k2) && results[k2].containsKey(k1)) {
+          results[k1][k2] = results[k2][k1] 
+        } else {
+          results[k1][k2] = engine.compare(smConfGroupwise, smConfPairwise,
+                            v1.collect { 
+                              factory.getURI(it)
+                             }.findAll { graph.containsVertex(it) }.toSet(), 
+                            v2.collect { 
+                              factory.getURI(it)
+                            }.findAll { graph.containsVertex(it) }.toSet())
+        }
+      }
+    }
+
+    results
+  }
+
+  static def WriteSimilarity(results, toFile) {
+    def out = []
+
+    results.each { k1, v1 ->
+      v1.each { k2, v2 ->
+        out << "$k1\t$k2\t$v2"
+      }
+    } 
+
+    out = out.join('\n')
+
+    if(toFile) {
+      new File(toFile).text = out 
+    } else {
+      println out
+    }
   }
 
   static def Write(ic, path) {
