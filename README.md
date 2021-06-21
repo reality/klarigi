@@ -2,7 +2,7 @@
 
 This application will give you explanations for clusters or groupings 
 of entities described by ontology classes. For example, groups of
-patient profiles described by HPO classes. 
+patient profiles described by HPO classes. Check out this [tutorial](https://colab.research.google.com/drive/18BxV-mOItKpOu_rtrb1_WSnXeB4YsRYi?usp=sharing) to be walked through some examples!
 
 ## Guide
 
