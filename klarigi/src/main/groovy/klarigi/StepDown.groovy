@@ -7,7 +7,7 @@ public class StepDown {
       while(totalCoverage <= (totalInclusionCutoff*100)) {
         def ef = candidates.findAll {
           //println "comparing $it.normIc and $icCutoff for IC. comparing $it.nExclusion and $exclusionCutoff for exclusion"
-          it.nIc >= icCutoff && it.nExclusion >= exclusionCutoff && it.nInclusion >= inclusionCutoff
+          it.nIc >= icCutoff && it.nExclusion >= exclusionCutoff && it.nInclusion >= inclusionCutoff && it.nPower > 0
         } 
         //println ef
         totalCoverage = ((ef.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
