@@ -38,9 +38,11 @@ class App {
       _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
 
-      _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
+      _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
-      _ longOpt: 'latex', 'Output the results in LaTeX table format', type: Boolean
+      _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
+      _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
+
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
 
@@ -62,12 +64,12 @@ class App {
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
       if(!o['group'] || (o['group'] && o['group'] == '*')) {
-        k.explainAllClusters(o['output-scores']).each {
-          k.output(it.cluster, it.results, o['latex'], o['print-members'], o['output'])
+        k.explainAllClusters(o['output-scores'], o['power']).each {
+          k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
         }
       } else {
-        def r = k.explainCluster(o['group'], o['output-scores'])
-        k.output(o['group'], r, o['latex'], o['print-members'], o['output'])
+        def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
+        k.output(o['group'], r, o['output-type'], o['print-members'], o['output'])
       }
     } else {
       k.genSim(o['output'])

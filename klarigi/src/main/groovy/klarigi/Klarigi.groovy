@@ -136,7 +136,7 @@ public class Klarigi {
     ontoHelper.labels = labels
   }
 
-  def explainCluster(cid, outputScores) {
+  def explainCluster(cid, powerMode, outputScores) {
     def scorer = new Scorer(ontoHelper, data)
     def candidates = scorer.scoreClasses(cid)
 
@@ -150,12 +150,16 @@ public class Klarigi {
       }
     }
 
-    StepDown.Run(coefficients, cid, candidates, data)
+    if(powerMode) {
+      StepDown.RunNewAlgorithm(coefficients, cid, candidates, data)
+    } else {
+      StepDown.Run(coefficients, cid, candidates, data)
+    }
   }
 
-  def explainAllClusters(outputScores) {
+  def explainAllClusters(outputScores, powerMode) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, outputScores) ]
+      [ cluster: g, results: explainCluster(g, powerMode, outputScores) ]
     }
   }
 
@@ -168,10 +172,14 @@ public class Klarigi {
     InformationContent.WriteSimilarity(results, toFile)
   }
 
-  def output(cid, results, latex, printMembers, toFile) {
+  def output(cid, results, outType, printMembers, toFile) {
     def cSize = data.groupings[cid].size()
-    if(latex) {
-      StepDown.PrintLaTeX(cid, results, ontoHelper.labels, cSize, toFile)
+    if(outType) {
+      if(outType == 'latex') {
+        StepDown.PrintLaTeX(cid, results, ontoHelper.labels, cSize, toFile)
+      } else if(outType == 'tsv') {
+        StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, toFile)
+      }
     } else {
       StepDown.Print(cid, results, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
     }

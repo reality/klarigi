@@ -7,6 +7,8 @@ public class Coefficients {
     MAX_EXCLUSION: 0.95,
     MIN_EXCLUSION: 0.30,
     MAX_TOTAL_INCLUSION: 0.95,
+    MAX_POWER: 0.8,
+    MIN_POWER: 0.1,
     STEP: 0.05,
   ]
 

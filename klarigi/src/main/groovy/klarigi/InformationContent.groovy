@@ -134,7 +134,7 @@ public class InformationContent {
     results
   }
 
-  static def WriteSimilarity(results, toFile) {
+  static def WriteSimilarity(results, groups, toFile) {
     def out = []
 
     results.each { k1, v1 ->

@@ -51,6 +51,8 @@ public class Scorer {
           v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
         }
 
+        v.nPower = v.nInclusion - (1-v.nExclusion)
+
         v.iri = k 
         v
       }
@@ -69,8 +71,8 @@ public class Scorer {
   }
 
   static def Write(c, fName) {
-    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tspecificity\n" + c.collect {
-      "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nIc}"
+    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + c.collect {
+      "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
   }
 } 
