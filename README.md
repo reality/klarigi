@@ -4,6 +4,13 @@ This application will give you explanations for clusters or groupings
 of entities described by ontology classes. For example, groups of
 patient profiles described by HPO classes. 
 
+Useful Links and Information:
+* Check out this [tutorial](https://colab.research.google.com/drive/18BxV-mOItKpOu_rtrb1_WSnXeB4YsRYi?usp=sharing) to be walked through some examples!
+* Papers:
+  * [Klarigi: Explanations for Semantic Clusters](https://www.biorxiv.org/content/10.1101/2021.06.14.448423v1)
+  * [Multi-faceted Semantic Clustering With Text-derived Phenotypes](https://www.medrxiv.org/content/10.1101/2021.05.26.21257830v1)
+* Important: [This release](https://github.com/reality/klarigi/releases/tag/0.0.8) is the last version with the algorithm exactly as described by the papers. Subsequent versions are experimental, involving some different heuristics and calculation methods!
+
 ## Guide
 
 ### Data Setup and Formatting
