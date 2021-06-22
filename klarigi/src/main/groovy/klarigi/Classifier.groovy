@@ -15,7 +15,9 @@ public class Classifier {
         def scores = [:]
         
         allExplanations.each { exps ->
-          scores[exps.cluster] = exps.results[0].collect { e ->
+          scores[exps.cluster] = 1
+
+          def rs = exps.results[0].collect { e ->
             // Get subclasses + equivalent of this explanatory class
             if(!subclassCache.containsKey(e.iri)) {
               def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
@@ -29,8 +31,13 @@ public class Classifier {
             }
             
             return score;
-          }.sum()
+          }
+
+          rs.each {
+            scores[exps.cluster] = scores[exps.cluster] * (1+it)
+          }
         }
+
 
         def best
         scores.each { k, v ->
