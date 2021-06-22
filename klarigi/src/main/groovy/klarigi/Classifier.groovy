@@ -55,6 +55,6 @@ public class Classifier {
     }
 
     def acc = tp / (tp + fp)
-    println "Reclassify accuracy: $acc"
+    return acc
   }
 }

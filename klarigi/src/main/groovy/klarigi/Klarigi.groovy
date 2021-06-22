@@ -19,11 +19,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.LogManager;
 
 public class Klarigi {
-  def data = [
-    groupings: [:],
-    associations: [:],
-    ic: [:]
-  ]
+  def data
   def ontoHelper = [
     reasoner: null, 
     dataFactory: null,
@@ -46,6 +42,11 @@ public class Klarigi {
   }
 
   def loadData(dataFile) {
+    data = [
+      groupings: [:],
+      associations: [:],
+      ic: [:]
+    ]
     try {
       new File(dataFile).splitEachLine('\t') {
         def (entity, terms, group) = it
@@ -163,8 +164,15 @@ public class Klarigi {
     }
   }
 
-  def classify(allExplanations) {
-    Classifier.classify(allExplanations, data, ontoHelper)
+  def reclassify(allExplanations) {
+    def acc = Classifier.classify(allExplanations, data, ontoHelper)
+    println "Reclassify accuracy: $acc"
+  }
+
+  def classify(path, allExplanations) {
+    loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
+    def acc = Classifier.classify(allExplanations, data, ontoHelper)
+    println "Test accuracy: $acc"
   }
 
   def genSim(toFile) {

@@ -41,6 +41,7 @@ class App {
       _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
+      _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
@@ -72,7 +73,10 @@ class App {
         }
 
         if(o['reclassify']) {
-          k.classify(allExplanations)
+          k.reclassify(allExplanations)
+        }
+        if(o['classify']) {
+          k.classify(o['classify'], allExplanations)
         }
       } else {
         def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
