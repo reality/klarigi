@@ -163,6 +163,10 @@ public class Klarigi {
     }
   }
 
+  def classify(allExplanations) {
+    Classifier.classify(allExplanations, data, ontoHelper)
+  }
+
   def genSim(toFile) {
     if(!icFactory) {
       println "Error: IC class not loaded (--similarity and --ic are not compatible)"

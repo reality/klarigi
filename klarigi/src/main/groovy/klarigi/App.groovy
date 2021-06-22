@@ -40,6 +40,8 @@ class App {
 
       _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
+      _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
+
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
 
@@ -64,12 +66,21 @@ class App {
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
       if(!o['group'] || (o['group'] && o['group'] == '*')) {
-        k.explainAllClusters(o['output-scores'], o['power']).each {
+        def allExplanations = k.explainAllClusters(o['output-scores'], o['power'])
+        allExplanations.each {
           k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
+        }
+
+        if(o['reclassify']) {
+          k.classify(allExplanations)
         }
       } else {
         def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
         k.output(o['group'], r, o['output-type'], o['print-members'], o['output'])
+
+        if(o['reclassify']) {
+          println "Must explain all groups for --reclassify"
+        }
       }
     } else {
       k.genSim(o['output'])

@@ -126,12 +126,23 @@ public class StepDown {
 
   static def PrintLaTeX(cid, res, labels, s, toFile) {
     def out = []
-    out << "{\\bf Group: $cid ($s members)} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    out << "\\begin{tabular}{p{10cm}|c|c|c|c}"
+    out << "{\\bf Group: $cid ($s members)} & {\\bf Power} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
     res[0].sort { -it.nIc }.each {
-      out << "${labels[it.iri]} (${it.iri}) & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+      def pIri = it.iri
+      if(pIri =~ 'obolibrary.org') {
+        pIri = pIri.tokenize('/').last()
+        pIri = pIri.replace('_', ':')
+        pIri = "{\\tt $pIri}"
+      } else {
+        pIri = it.iri.replaceAll('_', '\\\\_')
+      }
+
+      out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
     }
-    out << "{\\em Overall} & ${res[2].toDouble().round(2)} & ${res[1].toDouble().round(2)} & - \\\\ "
+    out << "{\\em Overall} & - & ${res[2].toDouble().round(2)} & ${res[1].toDouble().round(2)} & - \\\\ "
     out << "\\hline"
+    out << "\\end{tabular}"
     out = out.join('\n')
 
     if(toFile) {
