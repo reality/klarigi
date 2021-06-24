@@ -52,6 +52,8 @@ dependencies {
 
     implementation 'org.codehaus.gpars:gpars:1.2.1'
 
+    implementation group: 'be.cylab', name: 'java-roc', version: '0.0.6'
+
     // SML
     implementation 'com.github.sharispe:slib-sml:0.9.1'
 

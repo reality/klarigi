@@ -37,10 +37,10 @@ public class StepDown {
             continue;
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-          return [ef, totalCoverage, totalExclusion]
+          return [ef, totalCoverage, totalExclusion, candidates]
         } 
       }
-      return [[],0,0] // fail case
+      return [[],0,0,candidates] // fail case
     }
 
     return stepDown(candidates, c.MAX_IC, c.MAX_EXCLUSION, c.MAX_INCLUSION, c.MAX_TOTAL_INCLUSION)
@@ -78,10 +78,10 @@ public class StepDown {
             continue;
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-          return [ef, totalCoverage, totalExclusion]
+          return [ef, totalCoverage, totalExclusion, candidates]
         } 
       }
-      return [[],0,0] // fail case
+      return [[],0,0, candidates] // fail case
     }
 
     return stepDown(candidates, c.MAX_IC, c.MAX_POWER, c.MAX_TOTAL_INCLUSION)

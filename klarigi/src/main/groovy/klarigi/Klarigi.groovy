@@ -164,15 +164,29 @@ public class Klarigi {
     }
   }
 
-  def reclassify(allExplanations) {
-    def acc = Classifier.classify(allExplanations, data, ontoHelper)
-    println "Reclassify accuracy: $acc"
+  def reclassify(allExplanations, outClassScores) {
+    def m = Classifier.classify(allExplanations, data, ontoHelper)
+
+    println 'Reclassification:'
+    Classifier.Print(m)
+    println ''
+
+    if(outClassScores) {
+      Classifier.WriteScores(m, "reclassify")
+    }
   }
 
-  def classify(path, allExplanations) {
+  def classify(path, allExplanations, outClassScores) {
     loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
-    def acc = Classifier.classify(allExplanations, data, ontoHelper)
-    println "Test accuracy: $acc"
+
+    println 'Classification:'
+    def m = Classifier.classify(allExplanations, data, ontoHelper)
+    Classifier.Print(m)
+    println ''
+
+    if(outClassScores) {
+      Classifier.WriteScores(m, "classify")
+    }
   }
 
   def genSim(toFile) {

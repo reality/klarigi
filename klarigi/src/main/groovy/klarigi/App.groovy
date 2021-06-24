@@ -45,6 +45,7 @@ class App {
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
+      _ longOpt: 'output-classification-scores', 'Output classification scores and true/false labels for each group into files. Useful for generating AUCs.', type: Boolean
 
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
@@ -73,10 +74,10 @@ class App {
         }
 
         if(o['reclassify']) {
-          k.reclassify(allExplanations)
+          k.reclassify(allExplanations, o['output-classification-scores'])
         }
         if(o['classify']) {
-          k.classify(o['classify'], allExplanations)
+          k.classify(o['classify'], allExplanations, o['output-classification-scores'])
         }
       } else {
         def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
