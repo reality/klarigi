@@ -65,10 +65,10 @@ public class Classifier {
       }
     }
 
-    data.groupings.each { cid, entities ->
+    /*data.groupings.each { cid, entities ->
       metrics[cid].precision = metrics[cid].tp / (metrics[cid].tp + metrics[cid].fp)
       metrics[cid].recall = metrics[cid].tp / (metrics[cid].tp + metrics[cid].fn)
-    }
+    }*/
 
     return metrics
   }
