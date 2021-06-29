@@ -46,6 +46,7 @@ class App {
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
       _ longOpt: 'output-classification-scores', 'Output classification scores and true/false labels for each group into files. Useful for generating AUCs.', type: Boolean
+      _ longOpt: 'output-exp-dataframe', "Output a TSV describing a 'data-frame' of categorical values for each term appearing in derived explanations. Easy to load into R and do stuff with.", type: Boolean
 
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
@@ -73,18 +74,26 @@ class App {
           k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
         }
 
+        if(o['output-exp-dataframe']) {
+          k.writeDataframe('train', allExplanations)
+        }
+        
         if(o['reclassify']) {
           k.reclassify(allExplanations, o['output-classification-scores'])
         }
         if(o['classify']) {
+          if(o['output-exp-dataframe']) {
+            k.writeDataframe('test', allExplanations)
+          }
+
           k.classify(o['classify'], allExplanations, o['output-classification-scores'])
         }
       } else {
         def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
         k.output(o['group'], r, o['output-type'], o['print-members'], o['output'])
 
-        if(o['reclassify']) {
-          println "Must explain all groups for --reclassify"
+        if(o['reclassify'] || o['output-exp-dataframe']) {
+          println "Must explain all groups for --reclassify or --output-exp-dataframe"
         }
       }
     } else {

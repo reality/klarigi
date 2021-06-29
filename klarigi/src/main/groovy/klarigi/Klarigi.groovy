@@ -211,6 +211,38 @@ public class Klarigi {
     }
   }
 
+  def writeDataframe(prefix, allExplanations) {
+    def out = []
+    def subclassCache = [:]
+    def expVars = allExplanations.collect { 
+        allExplanations.collect { exps ->
+          exps.results[0].collect { it.iri }
+        }
+    }.flatten().unique(false)
+    out << "id\t" + expVars.collect { ontoHelper.labels[it] }.join('\t') + '\tgroup'
+
+    data.groupings.each { group, members ->
+      members.each { id ->
+        out << "$id\t" + expVars.collect { iri ->
+          if(!subclassCache.containsKey(iri)) {
+            def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(iri))
+            subclassCache[iri] = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
+          }
+          def subeq = subclassCache[iri] + iri
+
+          def label = false
+          if(data.associations[id].any { subeq.contains(it) }) {
+            label = true
+          }
+
+          label
+        }.join('\t') + "\t$group" 
+      }
+    }
+
+    new File("${prefix}_dataframe.tsv").text = out.join('\n')
+  }
+
   static def HandleError(e, verbose, msg) {
     println msg + ': ' + e.getMessage()
     if(verbose) {
