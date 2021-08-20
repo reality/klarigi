@@ -52,7 +52,7 @@ public class InformationContent {
   private G graph
 
   InformationContent(ontologyPath) {
-    this(ontologyPath, false, false)
+    this(ontologyPath, false, false, false)
   }
 
   InformationContent(ontologyPath, dataPath, annotIC, turtle) {
