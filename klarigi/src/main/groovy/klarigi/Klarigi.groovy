@@ -57,7 +57,12 @@ public class Klarigi {
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
         }
-        data.associations[entity] = terms
+        if(!data.associations.containsKey(entity)) {
+          data.associations[entity] = [:]
+        }
+        terms.each {
+          data.associations[entity][it] = true
+        }
 
         if(!data.groupings.containsKey(group)) {
           data.groupings[group] = []
@@ -231,7 +236,7 @@ public class Klarigi {
           def subeq = subclassCache[iri] + iri
 
           def label = false
-          if(data.associations[id].any { subeq.contains(it) }) {
+          if(subeq.any { data.associations[id].containsKey(it) }) {
             label = true
           }
 

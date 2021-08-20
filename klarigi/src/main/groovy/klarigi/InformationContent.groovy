@@ -120,11 +120,11 @@ public class InformationContent {
         } else {
           try {
           results[k1][k2] = engine.compare(smConfGroupwise, smConfPairwise,
-                            v1.collect { 
-                              factory.getURI(it)
+                            v1.collect { ak, av ->
+                              factory.getURI(ak)
                              }.findAll { graph.containsVertex(it) }.toSet(), 
-                            v2.collect { 
-                              factory.getURI(it)
+                            v2.collect { ak, av ->
+                              factory.getURI(ak)
                             }.findAll { graph.containsVertex(it) }.toSet())
           } catch(e) { results[k1][k2] = 0 }
         }

@@ -23,7 +23,7 @@ class KlarigiTest extends Specification {
 
 	def "test_associations"() {
     when:
-      def p3 = ["http://purl.obolibrary.org/obo/HP_0001510", "http://purl.obolibrary.org/obo/HP_0031960"]
+      def p3 = ["http://purl.obolibrary.org/obo/HP_0001510":true, "http://purl.obolibrary.org/obo/HP_0031960": true]
     then:
       k.data.associations.size() == 20 
     then:

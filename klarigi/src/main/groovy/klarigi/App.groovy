@@ -82,11 +82,11 @@ class App {
           k.reclassify(allExplanations, o['output-classification-scores'])
         }
         if(o['classify']) {
+          k.classify(o['classify'], allExplanations, o['output-classification-scores'])
+
           if(o['output-exp-dataframe']) {
             k.writeDataframe('test', allExplanations)
           }
-
-          k.classify(o['classify'], allExplanations, o['output-classification-scores'])
         }
       } else {
         def r = k.explainCluster(o['group'], o['power'], o['output-scores'])

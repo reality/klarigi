@@ -21,11 +21,11 @@ public class Scorer {
     subclasses << c
 		explainers[c] = [
 			ic: data.ic[c],
-			internalIncluded: data.groupings[cid].findAll { pid -> data.associations[pid].any { pc -> subclasses.contains(pc) } },
+			internalIncluded: data.groupings[cid].findAll { pid -> subclasses.any { sc -> data.associations[pid].containsKey(sc) } },
       externalIncluded: data.groupings.collect { lcid, p ->
         if(lcid == cid) { return []; }
         p.findAll { pid ->
-          data.associations[pid].any { pc -> subclasses.contains(pc) }
+          subclasses.any { sc -> data.associations[pid].containsKey(sc) }
         }
       }.flatten()
 		]
@@ -59,7 +59,7 @@ public class Scorer {
   }
 
   def scoreClasses(cid) {
-    def classList = data.associations.collect { k, v -> v }.flatten().unique(false) // all classes used in entity descriptions
+    def classList = data.associations.collect { k, v -> v.collect { kk, vv -> kk } }.flatten().unique(false) // all classes used in entity descriptions
     def explainers = [:]
     //GParsPool.withPool(4) { p ->
       classList.each {
