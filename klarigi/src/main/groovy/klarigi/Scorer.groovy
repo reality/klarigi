@@ -14,6 +14,7 @@ public class Scorer {
     this.data = data
   }
 
+  // so what if we could build a list of the classes of interest and their subclasses, and then go through it once 
   private def processClass(explainers, cid, c) {
 		if(explainers.containsKey(c)) { return; }
 		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
@@ -31,13 +32,6 @@ public class Scorer {
 		]
     explainers[c].inclusion = explainers[c].internalIncluded.size()
     explainers[c].exclusion = explainers[c].externalIncluded.size()
-
-		ontoHelper.reasoner.getSuperClasses(ce, true).each { n ->
-			n.getEntities().each { sc ->
-				def strc = sc.getIRI().toString()
-				processClass(explainers, cid, strc)
-			}
-		}
 	}
 
   private def normalise(explainers, cid) {
@@ -58,14 +52,38 @@ public class Scorer {
       }
   }
 
-  def scoreClasses(cid) {
-    def classList = data.associations.collect { k, v -> v.collect { kk, vv -> kk } }.flatten().unique(false) // all classes used in entity descriptions
-    def explainers = [:]
-    //GParsPool.withPool(4) { p ->
-      classList.each {
+  private def findRelevantClasses(relevant, c) {
+		if(relevant.contains(c)) { return; }
+    relevant << c
+
+		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
+		ontoHelper.reasoner.getSuperClasses(ce, false).each { n ->
+			n.getEntities().each { sc ->
+				def strc = sc.getIRI().toString()
+				findRelevantClasses(relevant, strc)
+			}
+		}
+
+    return relevant
+  }
+
+  def scoreClasses(cid, threads) {
+    // quick, though it should probably be built elsewhere
+    def classMap = [:]
+    data.associations.each { k, v -> v.collect { kk, vv -> classMap[kk] = true }}
+    def classList = classMap.collect { k, v -> k }
+
+    def relevant = []
+    classList.each {
+      findRelevantClasses(relevant, it)   
+    }
+
+    def explainers = new ConcurrentHashMap()
+    GParsPool.withPool(threads) { p ->
+      relevant.eachParallel {
         processClass(explainers, cid, it)
       }
-    //}
+    }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
     explainers
   }

@@ -30,11 +30,12 @@ public class Klarigi {
   def icFactory
 
   Klarigi(o) {
+    verbose = o['verbose']
+
     loadData(o['data'])
     loadOntology(o['ontology'])
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'])
     coefficients = Coefficients.Generate(o)
-    verbose = o['verbose']
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
@@ -64,13 +65,19 @@ public class Klarigi {
           data.associations[entity][it] = true
         }
 
-        if(!data.groupings.containsKey(group)) {
-          data.groupings[group] = []
+        group.tokenize(';').each { g ->
+          if(!data.groupings.containsKey(g)) {
+            data.groupings[g] = []
+          }
+          data.groupings[g] << entity
         }
-        data.groupings[group] << entity
       }
     } catch(e) {
       HandleError(e, verbose, "Error loading data file ($dataFile)")
+    }
+
+    if(verbose) {
+      println "Done loading dataset"
     }
   }
 
@@ -92,6 +99,10 @@ public class Klarigi {
       } catch(e) {
         HandleError(e, verbose, "Error calculating information content values")
       }
+    }
+
+    if(verbose) {
+      println "Done loading IC values"
     }
 
     if(saveIc) {
@@ -140,11 +151,15 @@ public class Klarigi {
     ontoHelper.dataFactory = manager.getOWLDataFactory()
     ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
     ontoHelper.labels = labels
+
+    if(verbose) {
+      println "Done loading the ontology"
+    }
   }
 
-  def explainCluster(cid, powerMode, outputScores) {
+  def explainCluster(cid, powerMode, outputScores, threads) {
     def scorer = new Scorer(ontoHelper, data)
-    def candidates = scorer.scoreClasses(cid)
+    def candidates = scorer.scoreClasses(cid, threads)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
@@ -156,6 +171,7 @@ public class Klarigi {
       }
     }
 
+    // TODO: now we have to, ah, add the multiprocessing
     if(powerMode) {
       StepDown.RunNewAlgorithm(coefficients, cid, candidates, data)
     } else {
@@ -163,9 +179,9 @@ public class Klarigi {
     }
   }
 
-  def explainAllClusters(outputScores, powerMode) {
+  def explainAllClusters(outputScores, powerMode, threads) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, outputScores) ]
+      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads) ]
     }
   }
 

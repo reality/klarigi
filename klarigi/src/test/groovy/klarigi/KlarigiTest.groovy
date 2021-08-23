@@ -66,7 +66,7 @@ class KlarigiTest extends Specification {
   def "test_scoring"() {
     when:
       def clusterId = "OMIM:604271"
-      explanations = s.scoreClasses(clusterId)
+      explanations = s.scoreClasses(clusterId, 1)
       def items = [
         [ 
           term: "http://purl.obolibrary.org/obo/HP_0004322",

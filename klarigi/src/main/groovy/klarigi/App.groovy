@@ -48,6 +48,8 @@ class App {
       _ longOpt: 'output-classification-scores', 'Output classification scores and true/false labels for each group into files. Useful for generating AUCs.', type: Boolean
       _ longOpt: 'output-exp-dataframe', "Output a TSV describing a 'data-frame' of categorical values for each term appearing in derived explanations. Easy to load into R and do stuff with.", type: Boolean
 
+      _ longOpt: 'threads', 'Number of threads to use, particularly for calculating scoring. This should speed things up a lot with larger datasets.', args: 1
+
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
 
@@ -66,10 +68,20 @@ class App {
       cliBuilder.usage()
     }
 
+    def threads = 1
+    if(o['threads']) {
+      try {
+        threads = Integer.parseInt(o['threads'])
+      } catch(e) {
+        println 'Warning: Could not parse --threads argument. Defaulting to 1.'
+        threads = 1
+      }
+    }
+
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
       if(!o['group'] || (o['group'] && o['group'] == '*')) {
-        def allExplanations = k.explainAllClusters(o['output-scores'], o['power'])
+        def allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads)
         allExplanations.each {
           k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
         }
@@ -89,7 +101,7 @@ class App {
           }
         }
       } else {
-        def r = k.explainCluster(o['group'], o['power'], o['output-scores'])
+        def r = k.explainCluster(o['group'], o['power'], o['output-scores'], threads)
         k.output(o['group'], r, o['output-type'], o['print-members'], o['output'])
 
         if(o['reclassify'] || o['output-exp-dataframe']) {
