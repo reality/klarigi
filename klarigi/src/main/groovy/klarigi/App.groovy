@@ -28,6 +28,7 @@ class App {
       _ longOpt: 'save-ic', 'Save the IC values to the given file', args:1
 
       g longOpt: 'group', 'The group to explain.', args: 1
+      gf longOpt: 'group-file', 'You can pass a file with a list of groups to: one per line. If you do this, the --group argument will be ignored.', args: 1
 
       _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
       _ longOpt: 'min-ic', 'Min IC to use in stepdown algorithm. Default: 0.4', args: 1
@@ -80,36 +81,44 @@ class App {
 
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
-      if(!o['group'] || (o['group'] && o['group'] == '*')) {
-        def allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads)
-        allExplanations.each {
-          k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
+      def allExplanations 
+      if(o['group-file']) {
+        def groups
+        try {
+          groups = new File(o['group-file']).text.split('\n')
+        } catch(e) {
+          println "Could not handle the --group-file: ${e.toString()}"
+          System.exit(1)
         }
+
+        allExplanations = k.explainClusters(groups, o['output-scores'], o['power'], threads)
+      } else if(o['group'] && o['group'] != '*') {
+        allExplanations = k.explainClusters([o['group']], o['output-scores'], o['power'], threads)
+      } else {
+        allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads)
+      }
+
+      allExplanations.each {
+        k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
+      }
+
+      if(o['output-exp-dataframe']) {
+        k.writeDataframe('train', allExplanations)
+      }
+      
+      if(o['reclassify']) {
+        k.reclassify(allExplanations, o['output-classification-scores'])
+      }
+      if(o['classify']) {
+        k.classify(o['classify'], allExplanations, o['output-classification-scores'])
 
         if(o['output-exp-dataframe']) {
-          k.writeDataframe('train', allExplanations)
-        }
-        
-        if(o['reclassify']) {
-          k.reclassify(allExplanations, o['output-classification-scores'])
-        }
-        if(o['classify']) {
-          k.classify(o['classify'], allExplanations, o['output-classification-scores'])
-
-          if(o['output-exp-dataframe']) {
-            k.writeDataframe('test', allExplanations)
-          }
-        }
-      } else {
-        def r = k.explainCluster(o['group'], o['power'], o['output-scores'], threads)
-        k.output(o['group'], r, o['output-type'], o['print-members'], o['output'])
-
-        if(o['reclassify'] || o['output-exp-dataframe']) {
-          println "Must explain all groups for --reclassify or --output-exp-dataframe"
+          k.writeDataframe('test', allExplanations)
         }
       }
+
     } else {
-      k.genSim(o['output'])
+      k.genSim(o['output'], o['group'])
     }
   }
 }

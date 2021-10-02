@@ -106,12 +106,13 @@ public class InformationContent {
   }
 
 	// this should really go to a diff class
-  def compareEntities(assoc) {
+  def compareEntities(assoc, groupings, group) {
     def smConfPairwise = new SMconf(SMConstants.FLAG_SIM_PAIRWISE_DAG_NODE_RESNIK_1995, icConf)
     def smConfGroupwise = new SMconf(SMConstants.FLAG_SIM_GROUPWISE_BMA, icConf)
 
     def results = [:]
 		assoc.each { k1, v1 ->
+      if(group && !groupings[group].contains(k1)) { return; }
       if(!results.containsKey(k1)) { results[k1] = [:] }
       assoc.each { k2, v2 ->
         if(k1 == k2) { return; }
@@ -134,7 +135,7 @@ public class InformationContent {
     results
   }
 
-  static def WriteSimilarity(results, groups, toFile) {
+  static def WriteSimilarity(results, toFile) {
     def out = []
 
     results.each { k1, v1 ->

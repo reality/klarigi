@@ -179,6 +179,12 @@ public class Klarigi {
     }
   }
 
+  def explainClusters(groups, outputScores, powerMode, threads) {
+    data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
+      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads) ]
+    }
+  }
+
   def explainAllClusters(outputScores, powerMode, threads) {
     data.groupings.collect { g, v ->
       [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads) ]
@@ -210,12 +216,12 @@ public class Klarigi {
     }
   }
 
-  def genSim(toFile) {
+  def genSim(toFile, group) {
     if(!icFactory) {
       println "Error: IC class not loaded (--similarity and --ic are not compatible)"
       System.exit(1)
     }
-    def results = icFactory.compareEntities(data.associations)
+    def results = icFactory.compareEntities(data.associations, data.groupings, group)
     InformationContent.WriteSimilarity(results, toFile)
   }
 
