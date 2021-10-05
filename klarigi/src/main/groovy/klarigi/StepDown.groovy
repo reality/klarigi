@@ -1,7 +1,7 @@
 package klarigi
 
 public class StepDown {
-  static def Run(c, cid, candidates, data) {
+  static def Run(c, cid, candidates, data, debug) {
     def totalCoverage = 0
     def stepDown = { e, icCutoff, exclusionCutoff, inclusionCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
@@ -15,10 +15,13 @@ public class StepDown {
         if(data.groupings.size() > 1) {
           totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
         }
-        //println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
-        if(totalCoverage <= (totalInclusionCutoff*100)) {
+        if(debug) {
+          println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
+        }
+        if(totalCoverage < (totalInclusionCutoff*100)) {
+          totalCoverage = 0 // OMG
           if(inclusionCutoff <= c.MIN_INCLUSION) {
-            if(icCutoff >= c.MIN_IC) {
+            if(icCutoff > c.MIN_IC) {
               icCutoff -= c.STEP
               exclusionCutoff = c.MAX_EXCLUSION
               inclusionCutoff = c.MAX_INCLUSION
@@ -46,7 +49,7 @@ public class StepDown {
     return stepDown(candidates, c.MAX_IC, c.MAX_EXCLUSION, c.MAX_INCLUSION, c.MAX_TOTAL_INCLUSION)
   }
 
-  static def RunNewAlgorithm(c, cid, candidates, data) {
+  static def RunNewAlgorithm(c, cid, candidates, data, debug) {
     def totalCoverage = 0
     def stepDown = { e, icCutoff, powerCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
@@ -60,10 +63,13 @@ public class StepDown {
         if(data.groupings.size() > 1) {
           totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
         }
-        //println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
-        if(totalCoverage <= (totalInclusionCutoff*100)) {
+        if(debug) {
+          println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
+        }
+        if(totalCoverage < (totalInclusionCutoff*100)) {
+          totalCoverage = 0
           if(powerCutoff <= c.MIN_POWER) {
-            if(icCutoff >= c.MIN_IC) {
+            if(icCutoff > c.MIN_IC) {
               icCutoff -= c.STEP
               powerCutoff = c.MAX_POWER
               continue;

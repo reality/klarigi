@@ -157,7 +157,7 @@ public class Klarigi {
     }
   }
 
-  def explainCluster(cid, powerMode, outputScores, threads) {
+  def explainCluster(cid, powerMode, outputScores, threads, debug) {
     def scorer = new Scorer(ontoHelper, data)
     def candidates = scorer.scoreClasses(cid, threads)
 
@@ -173,21 +173,21 @@ public class Klarigi {
 
     // TODO: now we have to, ah, add the multiprocessing
     if(powerMode) {
-      StepDown.RunNewAlgorithm(coefficients, cid, candidates, data)
+      StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, debug)
     } else {
-      StepDown.Run(coefficients, cid, candidates, data)
+      StepDown.Run(coefficients, cid, candidates, data, debug)
     }
   }
 
-  def explainClusters(groups, outputScores, powerMode, threads) {
+  def explainClusters(groups, outputScores, powerMode, threads, debug) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads) ]
+      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads, debug) ]
     }
   }
 
-  def explainAllClusters(outputScores, powerMode, threads) {
+  def explainAllClusters(outputScores, powerMode, threads, debug) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads) ]
+      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads, debug) ]
     }
   }
 

@@ -38,6 +38,7 @@ class App {
       _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
       _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
+      _ longOpt: 'debug', 'Print some debug output', type: Boolean
 
       _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
@@ -91,11 +92,11 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, o['output-scores'], o['power'], threads)
+        allExplanations = k.explainClusters(groups, o['output-scores'], o['power'], threads, o['debug'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], o['output-scores'], o['power'], threads)
+        allExplanations = k.explainClusters([o['group']], o['output-scores'], o['power'], threads, o['debug'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads)
+        allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads, o['debug'])
       }
 
       allExplanations.each {
