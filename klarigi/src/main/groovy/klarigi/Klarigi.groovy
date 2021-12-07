@@ -18,8 +18,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.LogManager;
 
+import java.math.MathContext
+
 public class Klarigi {
   def data
+  def allAssociations // lazy
   def ontoHelper = [
     reasoner: null, 
     dataFactory: null,
@@ -76,9 +79,26 @@ public class Klarigi {
       HandleError(e, verbose, "Error loading data file ($dataFile)")
     }
 
+    allAssociations = data.associations.collect { entity, terms ->
+      terms.keySet().toList()
+    }.flatten().unique(false)
+    println allAssociations
+
     if(verbose) {
       println "Done loading dataset"
     }
+  }
+
+  def sampleData() {
+    def r = new Random()
+    def newSample = [:] 
+    data.associations.each { id, terms ->
+      newSample[id] = [:]
+      terms.each { // create randomly sampled profile of the same size
+        newSample[id][allAssociations[r.nextInt(allAssociations.size())]] = true
+      }
+    }
+    return newSample
   }
 
   def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle) {
@@ -157,9 +177,69 @@ public class Klarigi {
     }
   }
 
+  def permutationTest(allExplanations, threads) {
+    def i = 0
+
+    def ae = [:] 
+    allExplanations.each { a ->
+      ae[a.cluster] = [:]
+      a.results[0].each { z ->
+        ae[a.cluster][z.iri] = z 
+        ae[a.cluster][z.iri].incVals = [ z.nInclusion ]
+        ae[a.cluster][z.iri].excVals = [ z.nExclusion ]
+        ae[a.cluster][z.iri].powVals = [ z.nPower ]
+      }
+    }
+
+    (0..1000).each {
+      def subData = [
+        associations: sampleData(),
+        groupings: data.groupings,
+        ic: data.ic
+      ]
+      def scorer = new Scorer(ontoHelper, subData)
+
+      i++
+      if((i % 100) == 0) {
+        println i
+      }
+     
+      ae.each { g, gp ->
+        def candidates = scorer.scoreClasses(g, threads, ae[g].keySet().toList())
+
+        candidates.each { v ->
+          def k = v.iri
+          ae[g][k].incVals << v.nInclusion
+          ae[g][k].excVals << v.nExclusion
+          ae[g][k].powVals << v.nPower
+        }
+      }
+    }
+
+    def ps = [:]
+    ae.each { c, terms ->
+      ps[c] = [:]
+      terms.each { iri, cv ->
+        ps[c][iri] = [
+          incP: new BigDecimal(cv.incVals.findAll { it >= cv.nInclusion }.size() / cv.incVals.size()).round(new MathContext(3)),
+          excP: new BigDecimal(cv.excVals.findAll { it >= cv.nExclusion }.size() / cv.excVals.size()).round(new MathContext(3)),
+          powP: new BigDecimal(cv.powVals.findAll { it >= cv.nPower }.size() / cv.powVals.size()).round(new MathContext(3))
+        ] 
+
+        def out = []
+        cv.incVals.eachWithIndex { e, idx ->
+          out << [ cv.incVals[idx], cv.excVals[idx], cv.powVals[idx] ].join('\t')
+        }
+        new File(iri.tokenize('/').last()+'.txt').text = out.join('\n')
+      }
+    }
+
+    ps
+  }
+
   def explainCluster(cid, powerMode, outputScores, threads, debug) {
     def scorer = new Scorer(ontoHelper, data)
-    def candidates = scorer.scoreClasses(cid, threads)
+    def candidates = scorer.scoreAllClasses(cid, threads)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
@@ -171,7 +251,6 @@ public class Klarigi {
       }
     }
 
-    // TODO: now we have to, ah, add the multiprocessing
     if(powerMode) {
       StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, debug)
     } else {
@@ -225,7 +304,7 @@ public class Klarigi {
     InformationContent.WriteSimilarity(results, toFile)
   }
 
-  def output(cid, results, outType, printMembers, toFile) {
+  def output(cid, results, pVals, outType, printMembers, toFile) {
     def cSize = data.groupings[cid].size()
     if(outType) {
       if(outType == 'latex') {
@@ -234,7 +313,7 @@ public class Klarigi {
         StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, toFile)
       }
     } else {
-      StepDown.Print(cid, results, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
+      StepDown.Print(cid, results, pVals, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
     }
   }
 

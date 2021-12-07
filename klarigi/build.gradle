@@ -6,6 +6,8 @@
  * User Manual available at https://docs.gradle.org/7.0/userguide/building_java_projects.html
  */
 
+
+
 plugins {
     // Apply the groovy Plugin to add support for Groovy.
     id 'groovy'
@@ -18,9 +20,14 @@ plugins {
 
 }
 
+java {
+    toolchain {
+            languageVersion.set(JavaLanguageVersion.of(12))
+                }
+                }
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+//sourceCompatibility = '12'
+//targetCompatibility = '12'
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -88,4 +95,4 @@ jacocoTestReport {
   }
 }
 
-version = '0.0.12'
+version = '0.0.13-SNAPSHOT'

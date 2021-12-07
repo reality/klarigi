@@ -1,5 +1,7 @@
 package klarigi
 
+import java.math.MathContext
+
 public class StepDown {
   static def Run(c, cid, candidates, data, debug) {
     def totalCoverage = 0
@@ -93,7 +95,7 @@ public class StepDown {
     return stepDown(candidates, c.MAX_IC, c.MAX_POWER, c.MAX_TOTAL_INCLUSION)
   }
 
-  static def Print(cid, res, labels, s, toFile, members, printMembers) {
+  static def Print(cid, res, pVals, labels, s, toFile, members, printMembers) {
     def out = []
     out << "----------------"
     out << "Group: $cid ($s members)"
@@ -104,7 +106,8 @@ public class StepDown {
     out << "Overall exclusion: ${res[2].toDouble().round(2)}%"
     out << "Explanatory classes:"
     res[0].each { z ->
-      out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+      def ps = pVals[z.iri]
+      out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
     }
     out << "----------------"
     out << ""

@@ -99,8 +99,11 @@ class App {
         allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads, o['debug'])
       }
 
+      def pVals = k.permutationTest(allExplanations, threads)
+      println pVals
+
       allExplanations.each {
-        k.output(it.cluster, it.results, o['output-type'], o['print-members'], o['output'])
+        k.output(it.cluster, it.results, pVals[it.cluster], o['output-type'], o['print-members'], o['output'])
       }
 
       if(o['output-exp-dataframe']) {

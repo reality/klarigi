@@ -18,6 +18,7 @@ public class Scorer {
   private def processClass(explainers, cid, c) {
 		if(explainers.containsKey(c)) { return; }
 		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
+    // could we cache this?
 		def subclasses = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
     subclasses << c
 		explainers[c] = [
@@ -30,7 +31,9 @@ public class Scorer {
         }
       }.flatten()
 		]
+    // How many of this term in this group
     explainers[c].inclusion = explainers[c].internalIncluded.size()
+    // How many of this term in other groups
     explainers[c].exclusion = explainers[c].externalIncluded.size()
 	}
 
@@ -42,7 +45,11 @@ public class Scorer {
 
         v.nExclusion = 1
         if(data.groupings.size() > 1) {
-          v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
+          // 1 - the proportion of non-group members mention the term, the more there are in other groups. So, higher number of nExclusion mean, the fewer of these terms there are in other groups
+          // how about we make it the proportion of total mentions that are in this group vs the other group?
+
+          //v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
+          v.nExclusion = 1 - (v.exclusion / (v.inclusion + v.exclusion))
         }
 
         v.nPower = v.nInclusion - (1-v.nExclusion)
@@ -67,7 +74,18 @@ public class Scorer {
     return relevant
   }
 
-  def scoreClasses(cid, threads) {
+  def scoreClasses(cid, threads, classes) {
+    def explainers = new ConcurrentHashMap()
+    GParsPool.withPool(threads) { p ->
+      classes.eachParallel {
+        processClass(explainers, cid, it)
+      }
+    }
+    explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
+    explainers
+  }
+
+  def scoreAllClasses(cid, threads) {
     // quick, though it should probably be built elsewhere
     def classMap = [:]
     data.associations.each { k, v -> v.collect { kk, vv -> classMap[kk] = true }}
