@@ -20,6 +20,7 @@ class App {
       _ longOpt: 'similarity-mode', 'Calculate semantic similarity instead of characterising groups', type: Boolean
 
       d longOpt: 'data', 'The data describing entities and associations. See documentation for format.', args: 1
+      pp longOpt: 'pp', 'Enable phenopacket input mode. If this is enabled, the --data argument should be either a single phenopacket JSON file, or a directory, from which all phenopacket JSON files will be read.', type: Boolean
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
       _ longOpt: 'turtle', 'Indicates that the ontology is a Turtle ontology (needed for calculating IC...)', type: Boolean
 

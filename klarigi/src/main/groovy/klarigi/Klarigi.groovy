@@ -35,7 +35,7 @@ public class Klarigi {
   Klarigi(o) {
     verbose = o['verbose']
 
-    loadData(o['data'])
+    loadData(o['data'], o['pp'])
     loadOntology(o['ontology'])
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'])
     coefficients = Coefficients.Generate(o)
@@ -45,14 +45,36 @@ public class Klarigi {
     }
   }
 
-  def loadData(dataFile) {
+  def loadData(dataFile, pp) {
     data = [
       groupings: [:],
       associations: [:],
       ic: [:]
     ]
     try {
-      new File(dataFile).splitEachLine('\t') {
+      def inputFile = new File(dataFile)
+      if(!inputFile.exists()) { RaiseError("Data file not found. Check --data argument.") }
+
+      def input
+      if(pp) { // Phenopackets mode
+        def toProcess
+        if(inputFile.isDirectory()) {
+          inputFile.eachFile { f ->
+            if(f.getName() =~ /json$/) {
+              toProcess << f
+            }
+          } 
+        } else {
+          toProcess = [inputFile]
+        } 
+
+        // Convert each of the phenopackets to input triples
+        input = toProcess.collect { PacketConverter.Convert(PacketConverter.Load(it)) }
+      } else {
+        input = new File(dataFile).collect { it.split('\t') }
+      }
+      
+      input.each {
         def (entity, terms, group) = it
 
         terms = terms.tokenize(';')
@@ -349,11 +371,18 @@ public class Klarigi {
     new File("${prefix}_dataframe.tsv").text = out.join('\n')
   }
 
+  // Exit from Exception
   static def HandleError(e, verbose, msg) {
     println msg + ': ' + e.getMessage()
     if(verbose) {
       e.printStackTrace()
     }
+    System.exit(1)
+  }
+
+  // Exit from our code
+  static def RaiseError(msg) {
+    println "Error: " + msg
     System.exit(1)
   }
 }
