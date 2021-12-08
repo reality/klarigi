@@ -177,7 +177,7 @@ public class Klarigi {
     }
   }
 
-  def permutationTest(allExplanations, threads) {
+  def permutationTest(allExplanations, threads, perms) {
     def i = 0
 
     def ae = [:] 
@@ -191,7 +191,7 @@ public class Klarigi {
       }
     }
 
-    (0..1000).each {
+    (0..perms).each {
       def subData = [
         associations: sampleData(),
         groupings: data.groupings,

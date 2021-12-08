@@ -1,6 +1,5 @@
 package klarigi
 
-import java.math.MathContext
 
 public class StepDown {
   static def Run(c, cid, candidates, data, debug) {
@@ -13,10 +12,10 @@ public class StepDown {
         } 
         //println ef
         totalCoverage = ((ef.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-        def totalExclusion = 100
+        /*def totalExclusion = 100
         if(data.groupings.size() > 1) {
           totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
-        }
+        }*/
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         }
@@ -42,7 +41,7 @@ public class StepDown {
             continue;
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-          return [ef, totalCoverage, totalExclusion, candidates]
+          return [ef, totalCoverage, candidates]
         } 
       }
       return [[],0,0,candidates] // fail case
@@ -61,10 +60,10 @@ public class StepDown {
         } 
         //println ef
         totalCoverage = ((ef.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-        def totalExclusion = 100
+        /*def totalExclusion = 100
         if(data.groupings.size() > 1) {
           totalExclusion = (1-(((ef.collect { it.internalExcluded }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
-        }
+        }*/
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         }
@@ -86,7 +85,7 @@ public class StepDown {
             continue;
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-          return [ef, totalCoverage, totalExclusion, candidates]
+          return [ef, totalCoverage, candidates]
         } 
       }
       return [[],0,0, candidates] // fail case
@@ -103,11 +102,14 @@ public class StepDown {
       out << "Members: " + members.join(', ')
     }
     out << "Overall inclusion: ${res[1].toDouble().round(2)}%"
-    out << "Overall exclusion: ${res[2].toDouble().round(2)}%"
     out << "Explanatory classes:"
     res[0].each { z ->
-      def ps = pVals[z.iri]
-      out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+      if(pVals) {
+        def ps = pVals[z.iri]
+        out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+      } else {
+        out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+      }
     }
     out << "----------------"
     out << ""
@@ -149,7 +151,7 @@ public class StepDown {
 
       out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
     }
-    out << "{\\em Overall} & - & ${res[2].toDouble().round(2)} & ${res[1].toDouble().round(2)} & - \\\\ "
+    out << "{\\em Overall} & - & ${res[2].toDouble().round(2)} & - & - \\\\ "
     out << "\\hline"
     out << "\\end{tabular}"
     out = out.join('\n')

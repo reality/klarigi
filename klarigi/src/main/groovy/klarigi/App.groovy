@@ -44,6 +44,7 @@ class App {
 
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
+      p longOpt: 'perms', 'Do permutation testing to provide p values for power, inclusion, and exclusion.', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
@@ -99,8 +100,10 @@ class App {
         allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads, o['debug'])
       }
 
-      def pVals = k.permutationTest(allExplanations, threads)
-      println pVals
+      def pVals = [:]
+      if(o['perms']) {
+        pVals = k.permutationTest(allExplanations, threads, Integer.parseInt(o['perms']))
+      }
 
       allExplanations.each {
         k.output(it.cluster, it.results, pVals[it.cluster], o['output-type'], o['print-members'], o['output'])

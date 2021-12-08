@@ -17,16 +17,19 @@ public class Classifier {
       ]
     }
 
+    // Iterate each entity
+    // So for some reason 
     data.groupings.each { cid, entities ->
       entities.each { entity ->
-        def codes = data.associations[entity]
+        def codes = data.associations[entity].keySet()
         def scores = [:]
         
+        // Iterate each cluster
         allExplanations.each { exps ->
           scores[exps.cluster] = 1
 
-//println exps
-          def rs = exps.results[3].collect { e ->
+          // Iterate all scored candidates (results[3])
+          def rs = exps.results[2].collect { e ->
             // Get subclasses + equivalent of this explanatory class
             if(!subclassCache.containsKey(e.iri)) {
               def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
@@ -36,16 +39,20 @@ public class Classifier {
 
             def score = 0
             if(subeq.any { codes.contains(it) }) {
-              score = e.nPower
+              score = e.nPower * e.nIc
+              //e.nInclusion + e.nExclusion
+              //e.nPower * e.nIc
             }
             
-            return score * e.nIc;
+            return score
           }
 
           rs.each {
             scores[exps.cluster] = scores[exps.cluster] * (1+it)
           }
         }
+
+        // So we have just built 'scores', which
 
         def best
         scores.each { k, v ->
