@@ -4,7 +4,7 @@ import org.semanticweb.owlapi.model.IRI
 import be.cylab.java.roc.*
 
 public class Classifier {
-  static def classify(allExplanations, data, ontoHelper) {
+  static def classify(allExplanations, data, ontoHelper, ecm) {
     def subclassCache = [:]
 
     def metrics = [:]
@@ -29,7 +29,12 @@ public class Classifier {
           scores[exps.cluster] = 1
 
           // Iterate all scored candidates (results[3])
-          def rs = exps.results[2].collect { e ->
+          def sterms = exps.results[2]
+          if(ecm) {
+            sterms = exps.results[0]
+          }
+
+          def rs = sterms.collect { e ->
             // Get subclasses + equivalent of this explanatory class
             if(!subclassCache.containsKey(e.iri)) {
               def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
@@ -90,14 +95,18 @@ public class Classifier {
 
       // trues
       m1.scores.each { s ->
-        scores << s[cid].toDouble()
-        truths << 1
+        if(s.containsKey(cid)) {
+          scores << s[cid].toDouble()
+          truths << 1
+        }
       }
 
       metrics.findAll { c2, m2 -> c2 != cid }.each { c2, m2 ->
         m2.scores.each { s ->
-          scores << s[cid].toDouble()
-          truths << 0
+          if(s.containsKey(cid)) {
+            scores << s[cid].toDouble()
+            truths << 0
+          }
         }
       }
 
@@ -109,9 +118,11 @@ public class Classifier {
       double[] scar = scores.toArray()
       double[] trar = truths.toArray()
       def roc = new Roc(scar, trar)
+      def auc = roc.computeAUC()
 
-      //def roc = new Roc(scores, truths)
-      println "$cid AUC: ${roc.computeAUC()}"
+      if(!auc.isNaN()) {
+        println "$cid AUC: ${auc}"
+      }
     }
   }
 

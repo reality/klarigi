@@ -22,7 +22,14 @@ import java.math.MathContext
 
 public class Klarigi {
   def data
-  def allAssociations // lazy
+
+  // A unique list containing every class directly annotated to any entity in the 
+  //  corpus. Generated after data corpus is loaded at the end of loadData. It's needed
+  //  for permutation, primarily, but there are probably other reasons that it's useful
+  //  to keep around too...
+  //  TODO: consider merging with above data, or in the class that eventually replaces that.
+  def allAssociations 
+
   def ontoHelper = [
     reasoner: null, 
     dataFactory: null,
@@ -35,9 +42,9 @@ public class Klarigi {
   Klarigi(o) {
     verbose = o['verbose']
 
-    loadData(o['data'], o['pp'])
+    loadData(o['data'], o['pp'], o['group'], o['egl'])
     loadOntology(o['ontology'])
-    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'])
+    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'])
     coefficients = Coefficients.Generate(o)
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
@@ -45,7 +52,7 @@ public class Klarigi {
     }
   }
 
-  def loadData(dataFile, pp) {
+  def loadData(dataFile, pp, interestGroup, egl) {
     data = [
       groupings: [:],
       associations: [:],
@@ -57,7 +64,11 @@ public class Klarigi {
 
       def input
       if(pp) { // Phenopackets mode
-        def toProcess
+        if(verbose) {
+          println "Phenopackets input mode engaged"
+        }
+
+        def toProcess = []
         if(inputFile.isDirectory()) {
           inputFile.eachFile { f ->
             if(f.getName() =~ /json$/) {
@@ -65,17 +76,39 @@ public class Klarigi {
             }
           } 
         } else {
-          toProcess = [inputFile]
+          toProcess << inputFile
         } 
 
         // Convert each of the phenopackets to input triples
         input = toProcess.collect { PacketConverter.Convert(PacketConverter.Load(it)) }
+
+        if(verbose) {
+          def outName = "pp_conv.tsv"
+          println "Phenopackets loaded. Also saving a converted copy to $outName"
+          PacketConverter.Save(input, outName) 
+        }
       } else {
         input = new File(dataFile).collect { it.split('\t') }
       }
-      
+
       input.each {
         def (entity, terms, group) = it
+
+        def gs = group.tokenize(';')
+        if(egl) {
+          gs = gs.findAll { g -> g == interestGroup }
+          // Here we exit if there are no interestGroup associations for this entity. We don't do this in the regular mode, because even ungrouped entities provide useful background...
+          if(gs.size() == 0) {
+            return;
+          }
+        }
+
+        gs.each { g ->
+          if(!data.groupings.containsKey(g)) {
+            data.groupings[g] = []
+          }
+          data.groupings[g] << entity
+        }
 
         terms = terms.tokenize(';')
         if(terms.size() > 0 && terms[0] =~ /:/ && terms[0].indexOf('http') == -1) { // stupid
@@ -89,22 +122,15 @@ public class Klarigi {
         terms.each {
           data.associations[entity][it] = true
         }
-
-        group.tokenize(';').each { g ->
-          if(!data.groupings.containsKey(g)) {
-            data.groupings[g] = []
-          }
-          data.groupings[g] << entity
-        }
       }
     } catch(e) {
       HandleError(e, verbose, "Error loading data file ($dataFile)")
     }
 
+    // kind of stupid but ok 
     allAssociations = data.associations.collect { entity, terms ->
       terms.keySet().toList()
     }.flatten().unique(false)
-    println allAssociations
 
     if(verbose) {
       println "Done loading dataset"
@@ -123,7 +149,7 @@ public class Klarigi {
     return newSample
   }
 
-  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle) {
+  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle, pp) {
     if(icFile) {
       try {
       new File(icFile).splitEachLine('\t') {
@@ -134,7 +160,7 @@ public class Klarigi {
       }
     } else {
       try {
-        icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle)
+        icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle, pp)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
         data.ic = icFactory.getInformationContent(allClasses)
@@ -292,8 +318,11 @@ public class Klarigi {
     }
   }
 
-  def reclassify(allExplanations, outClassScores) {
-    def m = Classifier.classify(allExplanations, data, ontoHelper)
+  def reclassify(allExplanations, outClassScores, ecm) {
+    def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
+    if(!m) {
+      RaiseError("Failed to build reclassifier. There may have been too few examples.")
+    }
 
     println 'Reclassification:'
     Classifier.Print(m)
@@ -304,13 +333,18 @@ public class Klarigi {
     }
   }
 
-  def classify(path, allExplanations, outClassScores) {
+  def classify(path, allExplanations, outClassScores, ecm) {
     loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
 
+    def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
+    if(!m) {
+      RaiseError("Failed to build classifier. There may have been too few examples.")
+    }
+
     println 'Classification:'
-    def m = Classifier.classify(allExplanations, data, ontoHelper)
     Classifier.Print(m)
     println ''
+
 
     if(outClassScores) {
       Classifier.WriteScores(m, "classify")
@@ -330,7 +364,7 @@ public class Klarigi {
     def cSize = data.groupings[cid].size()
     if(outType) {
       if(outType == 'latex') {
-        StepDown.PrintLaTeX(cid, results, ontoHelper.labels, cSize, toFile)
+        StepDown.PrintLaTeX(cid, results, pVals, ontoHelper.labels, cSize, toFile)
       } else if(outType == 'tsv') {
         StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, toFile)
       }

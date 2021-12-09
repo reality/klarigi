@@ -55,7 +55,7 @@ public class InformationContent {
     this(ontologyPath, false, false, false)
   }
 
-  InformationContent(ontologyPath, dataPath, annotIC, turtle) {
+  InformationContent(ontologyPath, dataPath, annotIC, turtle, pp) {
     factory = URIFactoryMemory.getSingleton()
 
     /*def graphURI = factory.getURI('http://purl.obolibrary.org/obo/HP_')
@@ -79,6 +79,9 @@ public class InformationContent {
 
     def icMeasure = DEFAULT_IC
     if(annotIC) {
+      if(pp) {
+        dataPath = "pp_conv.tsv"
+      } 
       gConf.addGDataConf(new GDataConf(GFormat.TSV_ANNOT, dataPath));
     }
     //gConf.addGAction(actionRerootConf)

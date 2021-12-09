@@ -49,7 +49,10 @@ public class Scorer {
           // how about we make it the proportion of total mentions that are in this group vs the other group?
 
           //v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
-          v.nExclusion = 1 - (v.exclusion / (v.inclusion + v.exclusion))
+          v.nExclusion = 0
+          if((v.inclusion + v.exclusion) > 0) {
+            v.nExclusion = v.inclusion / (v.inclusion + v.exclusion)
+          }
         }
 
         v.nPower = v.nInclusion - (1-v.nExclusion)

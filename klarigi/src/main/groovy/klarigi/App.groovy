@@ -29,6 +29,7 @@ class App {
       _ longOpt: 'save-ic', 'Save the IC values to the given file', args:1
 
       g longOpt: 'group', 'The group to explain.', args: 1
+      egl longOpt: 'exclusive-group-load', 'If set to true, only the group given in -g will be loaded into the corpus', type: Boolean
       gf longOpt: 'group-file', 'You can pass a file with a list of groups to: one per line. If you do this, the --group argument will be ignored.', args: 1
 
       _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
@@ -38,6 +39,7 @@ class App {
       _ longOpt: 'max-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
       _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
       _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
+      _ longOpt: 'min-power', 'Min acceptable value of power.', args: 1
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
       _ longOpt: 'debug', 'Print some debug output', type: Boolean
 
@@ -45,6 +47,7 @@ class App {
 
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
+      ecm longOpt: 'explainers-classify-mode', 'Only use the smaller set of explanatory variables for classification.', type: Boolean
       p longOpt: 'perms', 'Do permutation testing to provide p values for power, inclusion, and exclusion.', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
@@ -115,10 +118,10 @@ class App {
       }
       
       if(o['reclassify']) {
-        k.reclassify(allExplanations, o['output-classification-scores'])
+        k.reclassify(allExplanations, o['output-classification-scores'], o['ecm'])
       }
       if(o['classify']) {
-        k.classify(o['classify'], allExplanations, o['output-classification-scores'])
+        k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'])
 
         if(o['output-exp-dataframe']) {
           k.writeDataframe('test', allExplanations)

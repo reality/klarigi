@@ -135,10 +135,10 @@ public class StepDown {
 
   }
 
-  static def PrintLaTeX(cid, res, labels, s, toFile) {
+  static def PrintLaTeX(cid, res, pVals, labels, s, toFile) {
     def out = []
     out << "\\begin{tabular}{p{10cm}|c|c|c|c}"
-    out << "{\\bf Group: $cid ($s members)} & {\\bf Power} & {\\bf Exclusion} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    out << "{\\bf Group: $cid ($s members)} & {\\bf Power} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
     res[0].sort { -it.nIc }.each {
       def pIri = it.iri
       if(pIri =~ 'obolibrary.org') {
@@ -149,9 +149,14 @@ public class StepDown {
         pIri = it.iri.replaceAll('_', '\\\\_')
       }
 
-      out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+      if(pVals) {
+        def ps = pVals[it.iri]
+        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p\$<\$=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p\$<\$=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
+      } else {
+        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+      }
     }
-    out << "{\\em Overall} & - & ${res[2].toDouble().round(2)} & - & - \\\\ "
+    out << "{\\em Overall} & - & ${res[1].toDouble().round(2)} & - & - \\\\ "
     out << "\\hline"
     out << "\\end{tabular}"
     out = out.join('\n')

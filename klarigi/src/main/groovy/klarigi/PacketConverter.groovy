@@ -10,8 +10,14 @@ public class PacketConverter {
   public static def Convert(pDict) {
     [
       pDict['id'],
-      pDict['phenotypicFeatures'].collect { it.type.id },
-      pDict['diseases'].collect { term.id }
+      pDict['phenotypicFeatures'].collect { it.type.id }.join(';'),
+      pDict['diseases'].collect { it.term.id }.join(';')
     ] 
+  }
+
+  public static def Save(triples, String fName) {
+    new File(fName).text = triples.collect {
+      it.join('\t')
+    }.join('\n')
   }
 }
