@@ -110,7 +110,7 @@ class App {
       }
 
       allExplanations.each {
-        k.output(it.cluster, it.results, pVals[it.cluster], o['output-type'], o['print-members'], o['output'])
+        k.output(it.cluster, it.results, pVals[it.cluster], o['egl'], o['output-type'], o['print-members'], o['output'])
       }
 
       if(o['output-exp-dataframe']) {

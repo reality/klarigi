@@ -360,16 +360,16 @@ public class Klarigi {
     InformationContent.WriteSimilarity(results, toFile)
   }
 
-  def output(cid, results, pVals, outType, printMembers, toFile) {
+  def output(cid, results, pVals, egl, outType, printMembers, toFile) {
     def cSize = data.groupings[cid].size()
     if(outType) {
       if(outType == 'latex') {
-        StepDown.PrintLaTeX(cid, results, pVals, ontoHelper.labels, cSize, toFile)
+        StepDown.PrintLaTeX(cid, results, pVals, egl, ontoHelper.labels, cSize, toFile)
       } else if(outType == 'tsv') {
         StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, toFile)
       }
     } else {
-      StepDown.Print(cid, results, pVals, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
+      StepDown.Print(cid, results, pVals, egl, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
     }
   }
 

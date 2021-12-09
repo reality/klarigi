@@ -94,7 +94,7 @@ public class StepDown {
     return stepDown(candidates, c.MAX_IC, c.MAX_POWER, c.MAX_TOTAL_INCLUSION)
   }
 
-  static def Print(cid, res, pVals, labels, s, toFile, members, printMembers) {
+  static def Print(cid, res, pVals, egl, labels, s, toFile, members, printMembers) {
     def out = []
     out << "----------------"
     out << "Group: $cid ($s members)"
@@ -104,11 +104,21 @@ public class StepDown {
     out << "Overall inclusion: ${res[1].toDouble().round(2)}%"
     out << "Explanatory classes:"
     res[0].each { z ->
-      if(pVals) {
-        def ps = pVals[z.iri]
-        out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+      if(egl) {
+        if(pVals) {
+          def ps = pVals[z.iri]
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), IC: ${z.nIc.toDouble().round(2)}"
+        } else {
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
+        }
+
       } else {
-        out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+        if(pVals) {
+          def ps = pVals[z.iri]
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+        } else {
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+        }
       }
     }
     out << "----------------"
@@ -135,10 +145,16 @@ public class StepDown {
 
   }
 
-  static def PrintLaTeX(cid, res, pVals, labels, s, toFile) {
+  static def PrintLaTeX(cid, res, pVals, egl, labels, s, toFile) {
     def out = []
-    out << "\\begin{tabular}{p{10cm}|c|c|c|c}"
-    out << "{\\bf Group: $cid ($s members)} & {\\bf Power} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
+    out << "\\begin{tabular}{p{5cm}|l|l|l|l}"
+
+    if(egl) {
+      out << "{\\bf Group: $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    } else {
+      out << "{\\bf Group: $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
+    }
+
     res[0].sort { -it.nIc }.each {
       def pIri = it.iri
       if(pIri =~ 'obolibrary.org') {
@@ -149,11 +165,20 @@ public class StepDown {
         pIri = it.iri.replaceAll('_', '\\\\_')
       }
 
-      if(pVals) {
-        def ps = pVals[it.iri]
-        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p\$<\$=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p\$<\$=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
+      if(egl) {
+        if(pVals) {
+          def ps = pVals[it.iri]
+          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.ic.toDouble().round(2)} \\\\"
+        } else {
+          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+        }
       } else {
-        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+        if(pVals) {
+          def ps = pVals[it.iri]
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p\$<\$=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p\$<\$=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
+        } else {
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+        }
       }
     }
     out << "{\\em Overall} & - & ${res[1].toDouble().round(2)} & - & - \\\\ "
