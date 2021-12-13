@@ -107,7 +107,7 @@ public class StepDown {
       if(egl) {
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP}), IC: ${z.nIc.toDouble().round(2)}"
         } else {
           out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
         }
@@ -115,7 +115,7 @@ public class StepDown {
       } else {
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p<=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p<=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p<=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
         } else {
           out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
         }
@@ -168,14 +168,14 @@ public class StepDown {
       if(egl) {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.ic.toDouble().round(2)} \\\\"
         } else {
           out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
         }
       } else {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p\$<\$=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p\$<\$=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p\$<\$=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
         } else {
           out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
         }
