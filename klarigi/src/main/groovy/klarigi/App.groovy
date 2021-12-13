@@ -24,6 +24,8 @@ class App {
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
       _ longOpt: 'turtle', 'Indicates that the ontology is a Turtle ontology (needed for calculating IC...)', type: Boolean
 
+      _ longOpt: 'exclude-classes', 'A semi-colon delimited list of IRIs to exclude from scoring (and thus inclusion in explanations). Their subclasses will also be discluded.', args: 1
+
       ri longOpt: 'resnik-ic', 'Use Resnik annotation frequency for information content calculation', type: Boolean
       ic longOpt: 'ic', 'List of classes and associated information content values.', args: 1
       _ longOpt: 'save-ic', 'Save the IC values to the given file', args:1
@@ -84,6 +86,15 @@ class App {
         threads = 1
       }
     }
+    def excludeClasses = []
+    if(o['exclude-classes']) {
+      excludeClasses = o['exclude-classes'].tokenize()
+      if(excludeClasses.size() > 0 && excludeClasses[0] =~ /:/ && excludeClasses[0].indexOf('http') == -1) { // stupid
+          excludeClasses= excludeClasses.collect { 
+            'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+          }
+      }
+    }
 
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
@@ -97,16 +108,16 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, o['output-scores'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters(groups, excludeClasses, o['output-scores'], o['power'], threads, o['debug'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], o['output-scores'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters([o['group']], excludeClasses, o['output-scores'], o['power'], threads, o['debug'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], o['power'], threads, o['debug'])
+        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['power'], threads, o['debug'])
       }
 
       def pVals = [:]
       if(o['perms']) {
-        pVals = k.permutationTest(allExplanations, threads, Integer.parseInt(o['perms']))
+        pVals = k.permutationTest(allExplanations, excludeClasses, threads, Integer.parseInt(o['perms']))
       }
 
       allExplanations.each {

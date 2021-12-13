@@ -225,7 +225,7 @@ public class Klarigi {
     }
   }
 
-  def permutationTest(allExplanations, threads, perms) {
+  def permutationTest(allExplanations, excludeClasses, threads, perms) {
     def i = 0
 
     def ae = [:] 
@@ -253,7 +253,7 @@ public class Klarigi {
       }
      
       ae.each { g, gp ->
-        def candidates = scorer.scoreClasses(g, threads, ae[g].keySet().toList())
+        def candidates = scorer.scoreClasses(g, excludeClasses, threads, ae[g].keySet().toList())
 
         candidates.each { v ->
           def k = v.iri
@@ -285,9 +285,9 @@ public class Klarigi {
     ps
   }
 
-  def explainCluster(cid, powerMode, outputScores, threads, debug) {
+  def explainCluster(cid, powerMode, excludeClasses, outputScores, threads, debug) {
     def scorer = new Scorer(ontoHelper, data)
-    def candidates = scorer.scoreAllClasses(cid, threads)
+    def candidates = scorer.scoreAllClasses(cid, excludeClasses, threads)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
@@ -306,15 +306,15 @@ public class Klarigi {
     }
   }
 
-  def explainClusters(groups, outputScores, powerMode, threads, debug) {
+  def explainClusters(groups, excludeClasses, outputScores, powerMode, threads, debug) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
       [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads, debug) ]
     }
   }
 
-  def explainAllClusters(outputScores, powerMode, threads, debug) {
+  def explainAllClusters(outputScores, excludeClasses, powerMode, threads, debug) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, outputScores, threads, debug) ]
     }
   }
 

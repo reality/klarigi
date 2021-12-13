@@ -147,12 +147,13 @@ public class StepDown {
 
   static def PrintLaTeX(cid, res, pVals, egl, labels, s, toFile) {
     def out = []
-    out << "\\begin{tabular}{p{5cm}|l|l|l|l}"
 
     if(egl) {
-      out << "{\\bf Group: $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
+      out << "\\begin{tabular}{p{5cm}|l|l}"
+      out << "{\\bf $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
     } else {
-      out << "{\\bf Group: $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
+      out << "\\begin{tabular}{p{5cm}|l|l|l|l}"
+      out << "{\\bf $cid ($s members)} & {\\bf Power} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
     }
 
     res[0].sort { -it.nIc }.each {

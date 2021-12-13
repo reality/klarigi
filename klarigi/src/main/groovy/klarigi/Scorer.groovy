@@ -15,12 +15,13 @@ public class Scorer {
   }
 
   // so what if we could build a list of the classes of interest and their subclasses, and then go through it once 
-  private def processClass(explainers, cid, c) {
+  private def processClass(explainers, cid, excludeClasses, c) {
 		if(explainers.containsKey(c)) { return; }
 		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
     // could we cache this?
 		def subclasses = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
     subclasses << c
+    subclasses = subclasses.findAll { e -> !excludeClasses.contains(e) }
 		explainers[c] = [
 			ic: data.ic[c],
 			internalIncluded: data.groupings[cid].findAll { pid -> subclasses.any { sc -> data.associations[pid].containsKey(sc) } },
@@ -77,18 +78,18 @@ public class Scorer {
     return relevant
   }
 
-  def scoreClasses(cid, threads, classes) {
+  def scoreClasses(cid, excludeClasses, threads, classes) {
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
       classes.eachParallel {
-        processClass(explainers, cid, it)
+        processClass(explainers, cid, excludeClasses, it)
       }
     }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
     explainers
   }
 
-  def scoreAllClasses(cid, threads) {
+  def scoreAllClasses(cid, excludeClasses, threads) {
     // quick, though it should probably be built elsewhere
     def classMap = [:]
     data.associations.each { k, v -> v.collect { kk, vv -> classMap[kk] = true }}
@@ -102,7 +103,7 @@ public class Scorer {
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
       relevant.eachParallel {
-        processClass(explainers, cid, it)
+        processClass(explainers, cid, excludeClasses, it)
       }
     }
     explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
