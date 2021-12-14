@@ -1,14 +1,16 @@
 public class Coefficients {
   static def DEFAULTS = [
-    MAX_IC: 0.8,
-    MIN_IC: 0.4,
-    MAX_INCLUSION: 0.95,
-    MIN_INCLUSION: 0.30,
-    MAX_EXCLUSION: 0.95,
-    MIN_EXCLUSION: 0.30,
-    MAX_TOTAL_INCLUSION: 0.95,
-    MAX_POWER: 0.8,
-    MIN_POWER: 0.05,
+    TOP_IC: 0.8,
+    BOT_IC: 0.4,
+
+    TOP_TOTAL_INCLUSION: 0.95,
+    TOP_POWER: 0.8,
+    BOT_POWER: 0.05,
+
+    MIN_INCLUSION: 0,
+    MIN_EXCLUSION: 0,
+    MIN_IC: 0.5,
+
     STEP: 0.05,
   ]
 

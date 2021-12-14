@@ -308,7 +308,7 @@ public class Klarigi {
 
   def explainClusters(groups, excludeClasses, outputScores, powerMode, threads, debug) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, outputScores, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, outputScores, threads, debug) ]
     }
   }
 

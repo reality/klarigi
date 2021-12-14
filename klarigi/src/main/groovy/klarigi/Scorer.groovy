@@ -16,10 +16,9 @@ public class Scorer {
 
   // so what if we could build a list of the classes of interest and their subclasses, and then go through it once 
   private def processClass(explainers, cid, excludeClasses, c) {
+    if(excludeClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; }
-		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
-    // could we cache this?
-		def subclasses = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
+    def subclasses = getSubclasses(c)
     subclasses << c
     subclasses = subclasses.findAll { e -> !excludeClasses.contains(e) }
 		explainers[c] = [
@@ -34,9 +33,25 @@ public class Scorer {
 		]
     // How many of this term in this group
     explainers[c].inclusion = explainers[c].internalIncluded.size()
+
     // How many of this term in other groups
-    explainers[c].exclusion = explainers[c].externalIncluded.size()
+    explainers[c].externalInclusion = explainers[c].externalIncluded.size()
+
+    // This should be the number of entities in OTHER clusters that do NOT have this term.
+    explainers[c].externalExclusion = data.groupings.collect { lcid, p ->
+      if(lcid == cid) { 0 }
+      p.size()
+    }.sum() - explainers[c].externalInclusion
 	}
+
+  private def extendExcludeClasses(excludeClasses) {
+    excludeClasses.collect { getSubclasses(it) + it }.flatten().unique(false)
+  }
+
+  private def getSubclasses(String iri) {
+		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(iri))
+		ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
+  }
 
   private def normalise(explainers, cid) {
     explainers.findAll { k, v -> v.ic }
@@ -51,8 +66,8 @@ public class Scorer {
 
           //v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
           v.nExclusion = 0
-          if((v.inclusion + v.exclusion) > 0) {
-            v.nExclusion = v.inclusion / (v.inclusion + v.exclusion)
+          if((v.inclusion + v.externalInclusion) > 0) {
+            v.nExclusion = v.inclusion / (v.inclusion + v.externalInclusion)
           }
         }
 
@@ -79,6 +94,7 @@ public class Scorer {
   }
 
   def scoreClasses(cid, excludeClasses, threads, classes) {
+    excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
       classes.eachParallel {
@@ -90,7 +106,10 @@ public class Scorer {
   }
 
   def scoreAllClasses(cid, excludeClasses, threads) {
-    // quick, though it should probably be built elsewhere
+    excludeClasses = extendExcludeClasses(excludeClasses)
+
+    // TODO i think we can use the allclasses?
+    // or perhaps we're only interested in classes in this cluster?
     def classMap = [:]
     data.associations.each { k, v -> v.collect { kk, vv -> classMap[kk] = true }}
     def classList = classMap.collect { k, v -> k }

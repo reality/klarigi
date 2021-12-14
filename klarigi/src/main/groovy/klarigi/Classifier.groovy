@@ -10,113 +10,72 @@ public class Classifier {
     def metrics = [:]
     data.groupings.each { cid, entities ->
       metrics[cid] = [
-        tp: 0,
-        fp: 0, 
-        fn: 0,
+        truths: [],
         scores: []
       ]
     }
 
-    // Iterate each entity
-    // So for some reason 
-    data.groupings.each { cid, entities ->
-      entities.each { entity ->
-        def codes = data.associations[entity].keySet()
-        def scores = [:]
-        
-        // Iterate each cluster
-        allExplanations.each { exps ->
-          scores[exps.cluster] = 1
+    data.associations.each { entity, codes ->
+      // Iterate each cluster
+      def scores = [:]
 
-          // Iterate all scored candidates (results[3])
-          def sterms = exps.results[2]
-          if(ecm) {
-            sterms = exps.results[0]
+      allExplanations.each { exps ->
+        scores[exps.cluster] = 1
+        def sterms = exps.results[2]
+        if(ecm) {
+          sterms = exps.results[0]
+        }
+
+        def rs = sterms.collect { e ->
+          // Get subclasses + equivalent of this explanatory class
+          if(!subclassCache.containsKey(e.iri)) {
+            def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
+            subclassCache[e.iri] = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
           }
+          def subeq = subclassCache[e.iri] + e.iri
 
-          def rs = sterms.collect { e ->
-            // Get subclasses + equivalent of this explanatory class
-            if(!subclassCache.containsKey(e.iri)) {
-              def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
-              subclassCache[e.iri] = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
-            }
-            def subeq = subclassCache[e.iri] + e.iri
-
-            def score = 0
-            if(subeq.any { codes.contains(it) }) {
-              score = e.nPower * e.nIc
-              //e.nInclusion + e.nExclusion
-              //e.nPower * e.nIc
-            }
+          def score = 0
+          if(subeq.any { codes.containsKey(it) }) {
+            score = e.nPower * e.nIc
+          }
             
-            return score
-          }
-
-          rs.each {
-            scores[exps.cluster] = scores[exps.cluster] * (1+it)
-          }
+          return score
         }
 
-        // So we have just built 'scores', which
-
-        def best
-        scores.each { k, v ->
-          if(!best || (best && best[1] < v)) {
-            best = [k, v]
-          }
+        rs.each {
+          scores[exps.cluster] = scores[exps.cluster] * (1+it)
         }
+      }
 
-        if(best[0] == cid) {
-          metrics[cid].tp++
-        } else {
-          metrics[cid].fn++
-          metrics[best[0]].fp++
+      scores.each { c, v ->
+        def t = 0
+        if(data.groupings[c].contains(entity)) {
+          t = 1
         }
-
-        metrics[cid].scores << scores
+        metrics[c].scores << v
+        metrics[c].truths << t
       }
     }
-
-    /*data.groupings.each { cid, entities ->
-      metrics[cid].precision = metrics[cid].tp / (metrics[cid].tp + metrics[cid].fp)
-      metrics[cid].recall = metrics[cid].tp / (metrics[cid].tp + metrics[cid].fn)
-    }*/
 
     return metrics
   }
 
   static def Print(metrics) {
     metrics.each { cid, m1 ->
-      def out = []
-      def c = 0
-      
-      def scores = []
-      def truths = []
+      def max = m1.scores.max()
+      def min = m1.scores.min()
 
-      // trues
-      m1.scores.each { s ->
-        if(s.containsKey(cid)) {
-          scores << s[cid].toDouble()
-          truths << 1
+      m1.scores = m1.scores.collect { v ->
+        if((max - min) == 0) {
+          0
+        } else {
+          (v - min) / (max - min)
         }
       }
-
-      metrics.findAll { c2, m2 -> c2 != cid }.each { c2, m2 ->
-        m2.scores.each { s ->
-          if(s.containsKey(cid)) {
-            scores << s[cid].toDouble()
-            truths << 0
-          }
-        }
-      }
-
-      def maxScore = scores.max()
-      def minScore = scores.min()
-      scores = scores.collect { (it-minScore)/(maxScore/minScore) }
-      
+  
       // JAVA
-      double[] scar = scores.toArray()
-      double[] trar = truths.toArray()
+      double[] scar = m1.scores.toArray()
+      double[] trar = m1.truths.toArray()
       def roc = new Roc(scar, trar)
       def auc = roc.computeAUC()
 
@@ -133,15 +92,8 @@ public class Classifier {
       
       // trues
       m1.scores.each { s ->
-        out << "$c\t${s[cid]}\ttrue"
+        out << "$c\t${s}\t${m1.truths[c]}"
         c++
-      }
-
-      metrics.findAll { c2, m2 -> c2 != cid }.each { c2, m2 ->
-        m2.scores.each { s ->
-          out << "$c\t${s[cid]}\tfalse"
-          c++
-        }
       }
 
       out = out.join('\n')

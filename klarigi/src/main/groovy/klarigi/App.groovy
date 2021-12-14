@@ -34,14 +34,18 @@ class App {
       egl longOpt: 'exclusive-group-load', 'If set to true, only the group given in -g will be loaded into the corpus', type: Boolean
       gf longOpt: 'group-file', 'You can pass a file with a list of groups to: one per line. If you do this, the --group argument will be ignored.', args: 1
 
-      _ longOpt: 'max-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
-      _ longOpt: 'min-ic', 'Min IC to use in stepdown algorithm. Default: 0.4', args: 1
-      _ longOpt: 'max-inclusion', 'Max inclusion to use in stepdown algorithm. Default: 0.95', args: 1
-      _ longOpt: 'min-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3', args: 1
-      _ longOpt: 'max-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
-      _ longOpt: 'min-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
-      _ longOpt: 'max-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
-      _ longOpt: 'min-power', 'Min acceptable value of power.', args: 1
+      _ longOpt: 'top-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
+      _ longOpt: 'bot-ic', 'Min IC to use in stepdown algorithm. Default: 0.4', args: 1
+      _ longOpt: 'top-inclusion', 'Max inclusion to use in stepdown algorithm. Default: 0.95', args: 1
+      _ longOpt: 'bot-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3', args: 1
+      _ longOpt: 'top-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
+      _ longOpt: 'bot-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
+      _ longOpt: 'top-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
+      _ longOpt: 'bot-power', 'Min acceptable value of power.', args: 1
+
+      _ longOpt: 'min-exclusion', 'Variables with exclusion lower than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
+      _ longOpt: 'min-inclusion', 'Variables with inclusion lower than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
+
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
       _ longOpt: 'debug', 'Print some debug output', type: Boolean
 
@@ -88,13 +92,14 @@ class App {
     }
     def excludeClasses = []
     if(o['exclude-classes']) {
-      excludeClasses = o['exclude-classes'].tokenize()
+      excludeClasses = o['exclude-classes'].tokenize(';')
       if(excludeClasses.size() > 0 && excludeClasses[0] =~ /:/ && excludeClasses[0].indexOf('http') == -1) { // stupid
-          excludeClasses= excludeClasses.collect { 
+          excludeClasses = excludeClasses.collect { 
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
       }
     }
+    println excludeClasses
 
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
