@@ -11,10 +11,10 @@ public class StepDown {
     def stepDown = { e, icCutoff, powerCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
         def ef = candidates.findAll {
-          it.nIc >= icCutoff && it.nPower >= powerCutoff
+          it.nIc >= icCutoff && it.nPower >= powerCutoff && it.nPower >= c.MIN_POWER && it.nInclusion >= c.MIN_INCLUSION && it.nExclusion >= c.MIN_EXCLUSION
         } 
         //println ef
-        totalCoverage = ((ef.findAll { it.nInclusion > c.MIN_INCLUSION && it.nExclusion > c.MIN_EXCLUSION }.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
+        totalCoverage = ((ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
         def totalExclusion = 0
         if(data.groupings.size() > 1) {
           totalExclusion = (1-(((ef.collect { it.externalInclusion }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
@@ -24,6 +24,18 @@ public class StepDown {
         }
         if(totalCoverage < (totalInclusionCutoff*100)) {
           totalCoverage = 0
+          /*if(icCutoff <= c.BOT_IC) {
+            icCutoff = c.BOT_POWER
+            
+            if(powerCutoff > c.BOT_POWER) {
+              powerCutoff -= c.STEP
+            } else {
+              powerCutoff = c.TOP_POWER
+              totalInclusionCutoff -= c.STEP
+            }
+          } else {
+            icCutoff -= c.STEP
+          }*/
           if(powerCutoff <= c.BOT_POWER) {
             powerCutoff = c.TOP_POWER
 
@@ -33,15 +45,15 @@ public class StepDown {
               icCutoff = c.TOP_IC
               totalInclusionCutoff -= c.STEP
             }
+            
           } else {
             powerCutoff -= c.STEP
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-        println totalExclusion
           return [ef, totalCoverage, candidates]
         } 
       }
-      return [[],0,0, candidates] // fail case
+      return [ef, 0, candidates] // fail case
     }
 
     return stepDown(candidates, c.TOP_IC, c.TOP_POWER, c.TOP_TOTAL_INCLUSION)

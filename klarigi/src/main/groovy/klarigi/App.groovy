@@ -43,8 +43,12 @@ class App {
       _ longOpt: 'top-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
       _ longOpt: 'bot-power', 'Min acceptable value of power.', args: 1
 
-      _ longOpt: 'min-exclusion', 'Variables with exclusion lower than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
-      _ longOpt: 'min-inclusion', 'Variables with inclusion lower than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
+      _ longOpt: 'min-exclusion', 'Explanations with exclusion below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-inclusion', 'Explanations with inclusion below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-power', 'Explanations with power below this level will not be considered for explanations.', args: 1
+
+      _ longOpt: 'max-exclusion', 'Variables with exclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
+      _ longOpt: 'max-inclusion', 'Variables with inclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
 
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
       _ longOpt: 'debug', 'Print some debug output', type: Boolean
