@@ -55,6 +55,7 @@ class App {
 
       _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
+      _ longOpt: 'scores-only', 'Do not run StepDown algorithm. Useful if you only want to save scores.', type: Boolean
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
       ecm longOpt: 'explainers-classify-mode', 'Only use the smaller set of explanatory variables for classification.', type: Boolean
@@ -103,7 +104,6 @@ class App {
           }
       }
     }
-    println excludeClasses
 
     def k = new Klarigi(o)
     if(!o['similarity-mode']) {
@@ -117,11 +117,16 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, excludeClasses, o['output-scores'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters(groups, excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], excludeClasses, o['output-scores'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters([o['group']], excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['power'], threads, o['debug'])
+        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['scores-only'], o['output-type'], o['power'], threads, o['debug'])
+      }
+
+      if(o['scores-only']) {
+        println "Done."
+        return;
       }
 
       def pVals = [:]

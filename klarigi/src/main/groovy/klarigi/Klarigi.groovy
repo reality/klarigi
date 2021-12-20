@@ -245,7 +245,7 @@ public class Klarigi {
         groupings: data.groupings,
         ic: data.ic
       ]
-      def scorer = new Scorer(ontoHelper, subData)
+      def scorer = new Scorer(ontoHelper, coefficients, subData)
 
       i++
       if((i % 100) == 0) {
@@ -285,36 +285,43 @@ public class Klarigi {
     ps
   }
 
-  def explainCluster(cid, powerMode, excludeClasses, outputScores, threads, debug) {
-    def scorer = new Scorer(ontoHelper, data)
+  def explainCluster(cid, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) {
+    def scorer = new Scorer(ontoHelper, coefficients, data)
     def candidates = scorer.scoreAllClasses(cid, excludeClasses, threads)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
     if(outputScores) {
       try {
-        Scorer.Write(candidates, 'scores-'+cid+'.lst')
+        if(outputType == 'latex') {
+          Scorer.WriteLaTeX(candidates)
+        } else {
+          def fName = 'scores-'+cid+'.lst'
+          Scorer.Write(candidates, fName)
+          println "Output scores to $fName"
+        }
       } catch(e) {
         HandleError(e, verbose, "Error saving information content values ($saveIc)")
       }
     }
 
-    if(powerMode) {
-      StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, debug)
-    } else {
-      StepDown.Run(coefficients, cid, candidates, data, debug)
-    }
+    def res
+    if(!scoreOnly) {
+      res = StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, debug)
+    } 
+
+    return res
   }
 
-  def explainClusters(groups, excludeClasses, outputScores, powerMode, threads, debug) {
+  def explainClusters(groups, excludeClasses, scoreOnly, outputScores, outputType, powerMode, threads, debug) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, outputScores, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) ]
     }
   }
 
-  def explainAllClusters(outputScores, excludeClasses, powerMode, threads, debug) {
+  def explainAllClusters(outputScores, excludeClasses, scoreOnly, outputType, powerMode, threads, debug) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, outputScores, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) ]
     }
   }
 

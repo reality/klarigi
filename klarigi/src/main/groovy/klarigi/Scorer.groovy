@@ -8,10 +8,12 @@ import groovyx.gpars.GParsPool
 public class Scorer {
   private def ontoHelper
   private def data
+  private def c 
 
-  Scorer(ontoHelper, data) {
+  Scorer(ontoHelper, coefficients, data) {
     this.ontoHelper = ontoHelper
     this.data = data
+    this.c = coefficients
   }
 
   // so what if we could build a list of the classes of interest and their subclasses, and then go through it once 
@@ -76,6 +78,12 @@ public class Scorer {
         v.iri = k 
         v
       }
+      .findAll { v ->
+        v.nIc >= c.MIN_IC && 
+          v.nPower >= c.MIN_POWER && 
+          v.nExclusion >= c.MIN_EXCLUSION && 
+          v.nInclusion >= c.MIN_INCLUSION
+      }
   }
 
   private def findRelevantClasses(relevant, c) {
@@ -129,9 +137,13 @@ public class Scorer {
     explainers
   }
 
-  static def Write(c, fName) {
-    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + c.collect {
+  static def Write(s, fName) {
+    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
       "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
+  }
+
+  static def WriteLaTeX(s) {
+    println s
   }
 } 

@@ -11,7 +11,7 @@ public class StepDown {
     def stepDown = { e, icCutoff, powerCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
         def ef = candidates.findAll {
-          it.nIc >= icCutoff && it.nPower >= powerCutoff && it.nPower >= c.MIN_POWER && it.nInclusion >= c.MIN_INCLUSION && it.nExclusion >= c.MIN_EXCLUSION
+          it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
         //println ef
         totalCoverage = ((ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100

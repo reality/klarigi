@@ -7,11 +7,11 @@ public class Coefficients {
     TOP_POWER: 0.8,
     BOT_POWER: 0.1,
 
-    MIN_INCLUSION: 0,
-    MIN_EXCLUSION: 0,
     MAX_INCLUSION: 1,
     MAX_EXCLUSION: 1,
 
+    MIN_INCLUSION: 0,
+    MIN_EXCLUSION: 0,
     MIN_IC: 0.4,
     MIN_POWER: 0.1,
 
