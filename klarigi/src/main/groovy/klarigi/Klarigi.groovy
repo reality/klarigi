@@ -293,10 +293,11 @@ public class Klarigi {
 
     if(outputScores) {
       try {
+        def fName = false 
         if(outputType == 'latex') {
-          Scorer.WriteLaTeX(candidates)
+          Scorer.WriteLaTeX(cid, candidates, fName)
         } else {
-          def fName = 'scores-'+cid+'.lst'
+          fName = 'scores-'+cid+'.lst'
           Scorer.Write(candidates, fName)
           println "Output scores to $fName"
         }

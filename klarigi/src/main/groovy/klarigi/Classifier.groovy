@@ -18,7 +18,7 @@ public class Classifier {
     data.associations.each { entity, codes ->
       // Iterate each cluster
       def scores = [:]
-
+      
       allExplanations.each { exps ->
         scores[exps.cluster] = 1
         def sterms = exps.results[2]

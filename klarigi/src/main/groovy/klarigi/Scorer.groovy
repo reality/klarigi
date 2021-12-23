@@ -109,7 +109,8 @@ public class Scorer {
         processClass(explainers, cid, excludeClasses, it)
       }
     }
-    explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
+    // Note, this turns it into a list rather than a hashmap
+    explainers = normalise(explainers, cid) 
     explainers
   }
 
@@ -137,13 +138,37 @@ public class Scorer {
     explainers
   }
 
-  static def Write(s, fName) {
+  static def Write(cid, s, fName) {
     new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
       "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
   }
 
-  static def WriteLaTeX(s) {
-    println s
+  static def WriteLaTeX(cid, s, fName) {
+    def out = []
+
+    out << "{\\bf Class} & {\\bf Power} & {\\bf Inclusivity} & & {\\bf Exclusivity} & {\\bf Specificity} \\\\"
+    out << "\\hline \\hline"
+
+    res[0].sort { -it.nIc }.each {
+      def pIri = it.iri
+      if(pIri =~ 'obolibrary.org') {
+        pIri = pIri.tokenize('/').last()
+        pIri = pIri.replace('_', ':')
+        pIri = "{\\tt $pIri}"
+      } else {
+        pIri = it.iri.replaceAll('_', '\\\\_')
+      }
+
+        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+    }
+    out << "\\end{tabular}"
+    out = out.join('\n')
+
+    if(toFile) {
+      new File(toFile).text += '\n' + out 
+    } else {
+      println out
+    }
   }
 } 
