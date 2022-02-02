@@ -67,19 +67,33 @@ public class Scorer {
           // how about we make it the proportion of total mentions that are in this group vs the other group?
 
           //v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
+
+          // how about: the difference between nExclusion
+          // and the percentage of 
           v.nExclusion = 0
           if((v.inclusion + v.externalInclusion) > 0) {
             v.nExclusion = v.inclusion / (v.inclusion + v.externalInclusion)
           }
+
+          def prop = ((data.groupings[cid].size() * 100) / data.associations.size()) / 100
+          v.nExclusion -= prop
+
         }
 
-        v.nPower = v.nInclusion - (1-v.nExclusion)
+        //v.nPower = v.nInclusion - (1-v.nExclusion)
+
+
+        //v.nPower = v.nExclusion
+        v.nPower = 0 
+        if(v.nInclusion + v.nExclusion > 0) {
+          v.nPower = (v.nInclusion * (1-v.nExclusion)) / (v.nInclusion + (1-v.nExclusion))
+        }
 
         v.iri = k 
         v
       }
       .findAll { v ->
-        v.nIc >= c.MIN_IC && 
+        return v.nIc >= c.MIN_IC && 
           v.nPower >= c.MIN_POWER && 
           v.nExclusion >= c.MIN_EXCLUSION && 
           v.nInclusion >= c.MIN_INCLUSION
@@ -138,19 +152,19 @@ public class Scorer {
     explainers
   }
 
-  static def Write(cid, s, fName) {
+  static def Write(cid, s, labels, fName) {
     new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
       "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
   }
 
-  static def WriteLaTeX(cid, s, fName) {
+  static def WriteLaTeX(cid, res, labels, fName) {
     def out = []
 
     out << "{\\bf Class} & {\\bf Power} & {\\bf Inclusivity} & & {\\bf Exclusivity} & {\\bf Specificity} \\\\"
     out << "\\hline \\hline"
 
-    res[0].sort { -it.nIc }.each {
+    res.sort { -it.nPower }.each {
       def pIri = it.iri
       if(pIri =~ 'obolibrary.org') {
         pIri = pIri.tokenize('/').last()
@@ -165,8 +179,8 @@ public class Scorer {
     out << "\\end{tabular}"
     out = out.join('\n')
 
-    if(toFile) {
-      new File(toFile).text += '\n' + out 
+    if(fName) {
+      new File(fName).text += '\n' + out 
     } else {
       println out
     }

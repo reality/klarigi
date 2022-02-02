@@ -121,7 +121,7 @@ public class StepDown {
       out << "{\\bf $cid ($s members)} & {\\bf Power} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
     }
 
-    res[0].sort { -it.nIc }.each {
+    res[0].sort { -it.nPower }.each {
       def pIri = it.iri
       if(pIri =~ 'obolibrary.org') {
         pIri = pIri.tokenize('/').last()

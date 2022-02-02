@@ -46,6 +46,7 @@ class App {
       _ longOpt: 'min-exclusion', 'Explanations with exclusion below this level will not be considered for explanations.', args: 1
       _ longOpt: 'min-inclusion', 'Explanations with inclusion below this level will not be considered for explanations.', args: 1
       _ longOpt: 'min-power', 'Explanations with power below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-ic', 'Explanations with IC below this level will not be considered for explanations.', args: 1
 
       _ longOpt: 'max-exclusion', 'Variables with exclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
       _ longOpt: 'max-inclusion', 'Variables with inclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1

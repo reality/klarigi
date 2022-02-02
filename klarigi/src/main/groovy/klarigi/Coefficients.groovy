@@ -20,9 +20,12 @@ public class Coefficients {
 
   static def Generate(o) {
     def c = [:]
+    println 'what the FUCK'
 
     DEFAULTS.each { k, v ->
       def optKey = k.replaceAll('_', '-').toLowerCase() // heh
+      println optKey
+      println o[optKey]
       if(o[optKey]) {
         c[k] = new BigDecimal(o[optKey])
       } else {

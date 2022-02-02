@@ -45,6 +45,7 @@ public class Klarigi {
     loadData(o['data'], o['pp'], o['group'], o['egl'])
     loadOntology(o['ontology'])
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'])
+    println 'hi'
     coefficients = Coefficients.Generate(o)
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
@@ -295,14 +296,14 @@ public class Klarigi {
       try {
         def fName = false 
         if(outputType == 'latex') {
-          Scorer.WriteLaTeX(cid, candidates, fName)
+          Scorer.WriteLaTeX(cid, candidates, ontoHelper.labels, fName)
         } else {
           fName = 'scores-'+cid+'.lst'
-          Scorer.Write(candidates, fName)
+          Scorer.Write(cid, candidates, ontoHelper.labels, fName)
           println "Output scores to $fName"
         }
       } catch(e) {
-        HandleError(e, verbose, "Error saving information content values ($saveIc)")
+        HandleError(e, verbose, "Error saving information content values.")
       }
     }
 
