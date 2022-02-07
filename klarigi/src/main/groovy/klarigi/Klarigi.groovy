@@ -254,7 +254,7 @@ public class Klarigi {
       }
      
       ae.each { g, gp ->
-        def candidates = scorer.scoreClasses(g, excludeClasses, threads, ae[g].keySet().toList())
+        def candidates = scorer.scoreClasses(g, excludeClasses, threads, ae[g].keySet().toList(), true)
 
         candidates.each { v ->
           def k = v.iri

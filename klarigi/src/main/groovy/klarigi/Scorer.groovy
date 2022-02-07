@@ -55,7 +55,7 @@ public class Scorer {
 		ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
   }
 
-  private def normalise(explainers, cid) {
+  private def normalise(explainers, cid, returnAll) {
     explainers.findAll { k, v -> v.ic }
       .collect { k, v ->
         v.nIc = v.ic // TODO this depends on an already normalised IC value...
@@ -63,40 +63,38 @@ public class Scorer {
 
         v.nExclusion = 1
         if(data.groupings.size() > 1) {
-          // 1 - the proportion of non-group members mention the term, the more there are in other groups. So, higher number of nExclusion mean, the fewer of these terms there are in other groups
-          // how about we make it the proportion of total mentions that are in this group vs the other group?
-
-          //v.nExclusion = 1 - (v.exclusion / data.groupings.findAll { kk, vv -> kk != cid }.collect { kk, vv -> vv.size() }.sum())
-
-          // how about: the difference between nExclusion
-          // and the percentage of 
           v.nExclusion = 0
           if((v.inclusion + v.externalInclusion) > 0) {
             v.nExclusion = v.inclusion / (v.inclusion + v.externalInclusion)
           }
 
-          def prop = ((data.groupings[cid].size() * 100) / data.associations.size()) / 100
+          def prop = ((data.groupings[cid].size()) / data.associations.size())
           v.nExclusion -= prop
 
-        }
-
-        //v.nPower = v.nInclusion - (1-v.nExclusion)
-
-
-        //v.nPower = v.nExclusion
-        v.nPower = 0 
-        if(v.nInclusion + v.nExclusion > 0) {
-          v.nPower = (v.nInclusion * (1-v.nExclusion)) / (v.nInclusion + (1-v.nExclusion))
+          v.nPower = 0 
+          if(v.nInclusion + v.nExclusion > 0) {
+            v.nPower = (v.nInclusion * (1-v.nExclusion)) / (v.nInclusion + (1-v.nExclusion))
+          }
+        } else {
+          v.nPower = v.nInclusion
         }
 
         v.iri = k 
         v
       }
       .findAll { v ->
-        return v.nIc >= c.MIN_IC && 
-          v.nPower >= c.MIN_POWER && 
-          v.nExclusion >= c.MIN_EXCLUSION && 
-          v.nInclusion >= c.MIN_INCLUSION
+        if(!returnAll) {
+          if(data.groupings.size() > 1) {
+            return v.nIc >= c.MIN_IC && 
+              v.nPower >= c.MIN_POWER && 
+              v.nExclusion >= c.MIN_EXCLUSION && 
+              v.nInclusion >= c.MIN_INCLUSION
+          } else {
+            return v.nIc >= c.MIN_IC && v.nInclusion >= c.MIN_INCLUSION
+          }
+        } else {
+          true
+        }
       }
   }
 
@@ -116,6 +114,10 @@ public class Scorer {
   }
 
   def scoreClasses(cid, excludeClasses, threads, classes) {
+    scoreClasses(cid, excludeClasses, threads, classes, false)
+  }
+
+  def scoreClasses(cid, excludeClasses, threads, classes, returnAll) {
     excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
@@ -123,12 +125,17 @@ public class Scorer {
         processClass(explainers, cid, excludeClasses, it)
       }
     }
+
     // Note, this turns it into a list rather than a hashmap
-    explainers = normalise(explainers, cid) 
+    explainers = normalise(explainers, cid, returnAll) 
     explainers
   }
 
   def scoreAllClasses(cid, excludeClasses, threads) {
+    scoreAllClasses(cid, excludeClasses, threads, false)
+  }
+
+  def scoreAllClasses(cid, excludeClasses, threads, returnAll) {
     excludeClasses = extendExcludeClasses(excludeClasses)
 
     // TODO i think we can use the allclasses?
@@ -148,7 +155,7 @@ public class Scorer {
         processClass(explainers, cid, excludeClasses, it)
       }
     }
-    explainers = normalise(explainers, cid) // Note, this turns it into a list rather than a hashmap
+    explainers = normalise(explainers, cid, returnAll) // Note, this turns it into a list rather than a hashmap
     explainers
   }
 
