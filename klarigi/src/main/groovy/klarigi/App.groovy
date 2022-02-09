@@ -54,12 +54,14 @@ class App {
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
       _ longOpt: 'debug', 'Print some debug output', type: Boolean
 
-      _ longOpt: 'power', 'Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
+      _ longOpt: 'power', 'DEPRECATED: Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
 
       _ longOpt: 'scores-only', 'Do not run StepDown algorithm. Useful if you only want to save scores.', type: Boolean
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
       ecm longOpt: 'explainers-classify-mode', 'Only use the smaller set of explanatory variables for classification.', type: Boolean
+      _ longOpt: 'classify-with-variables', 'Instead of using Klarigi\'s results to (re)-classify with, use the terms specified in the given file. The file should be a two-column TSV. First column is a term ID, the second is the group association (group this variable should be used to explain).', args: 1
+
       p longOpt: 'perms', 'Do permutation testing to provide p values for power, inclusion, and exclusion.', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
@@ -144,10 +146,10 @@ class App {
       }
       
       if(o['reclassify']) {
-        k.reclassify(allExplanations, o['output-classification-scores'], o['ecm'])
+        k.reclassify(allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
       }
       if(o['classify']) {
-        k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'])
+        k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
 
         if(o['output-exp-dataframe']) {
           k.writeDataframe('test', allExplanations)

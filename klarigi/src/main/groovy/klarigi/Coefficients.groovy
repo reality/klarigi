@@ -11,7 +11,7 @@ public class Coefficients {
     MAX_EXCLUSION: 1,
 
     MIN_INCLUSION: 0,
-    MIN_EXCLUSION: 0,
+    MIN_EXCLUSION: 0.05,
     MIN_IC: 0.4,
     MIN_POWER: 0.1,
 
@@ -20,12 +20,9 @@ public class Coefficients {
 
   static def Generate(o) {
     def c = [:]
-    println 'what the FUCK'
 
     DEFAULTS.each { k, v ->
       def optKey = k.replaceAll('_', '-').toLowerCase() // heh
-      println optKey
-      println o[optKey]
       if(o[optKey]) {
         c[k] = new BigDecimal(o[optKey])
       } else {

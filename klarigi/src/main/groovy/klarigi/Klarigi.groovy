@@ -327,7 +327,25 @@ public class Klarigi {
     }
   }
 
-  def reclassify(allExplanations, outClassScores, ecm) {
+  def reclassify(allExplanations, outClassScores, ecm, cwf, excludeClasses, threads) {
+    if(cwf) { 
+      ecm = false
+
+      def assoc = [:]
+      new File(cwf).splitEachLine('\t') {
+        if(!assoc.containsKey(it[1])) { assoc[it[1]] = [] }
+        assoc[it[1]] << 'http://purl.obolibrary.org/obo/' + it[0].replace(':','_')
+      }
+
+      println assoc
+
+      def scorer = new Scorer(ontoHelper, coefficients, data)
+
+       allExplanations.each { exps ->
+         exps.results[2] = scorer.scoreClasses(exps.cluster, excludeClasses, threads, assoc[exps.cluster], true)
+      }
+    }
+
     def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
@@ -342,7 +360,7 @@ public class Klarigi {
     }
   }
 
-  def classify(path, allExplanations, outClassScores, ecm) {
+  def classify(path, allExplanations, outClassScores, ecm, cwf, excludeClasses, threads) {
     loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
 
     def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
@@ -353,7 +371,6 @@ public class Klarigi {
     println 'Classification:'
     Classifier.Print(m)
     println ''
-
 
     if(outClassScores) {
       Classifier.WriteScores(m, "classify")
