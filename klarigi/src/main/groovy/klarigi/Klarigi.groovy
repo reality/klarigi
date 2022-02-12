@@ -254,13 +254,23 @@ public class Klarigi {
       }
      
       ae.each { g, gp ->
-        def candidates = scorer.scoreClasses(g, excludeClasses, threads, ae[g].keySet().toList(), true)
+        def cSet = ae[g].keySet().toList()
+        def candidates = scorer.scoreClasses(g, excludeClasses, threads, cSet, true)
 
         candidates.each { v ->
           def k = v.iri
           ae[g][k].incVals << v.nInclusion
           ae[g][k].excVals << v.nExclusion
           ae[g][k].powVals << v.nPower
+
+          cSet -= k
+        }
+
+        // Add zeros for remaining bois
+        cSet.each { k ->
+          ae[g][k].incVals << 0
+          ae[g][k].excVals << 0
+          ae[g][k].powVals << 0
         }
       }
     }
@@ -269,6 +279,7 @@ public class Klarigi {
     ae.each { c, terms ->
       ps[c] = [:]
       terms.each { iri, cv ->
+      if(iri == "http://purl.obolibrary.org/obo/HP_0009763") { println cv.incVals }
         ps[c][iri] = [
           incP: new BigDecimal(cv.incVals.findAll { it >= cv.nInclusion }.size() / cv.incVals.size()).round(new MathContext(3)),
           excP: new BigDecimal(cv.excVals.findAll { it >= cv.nExclusion }.size() / cv.excVals.size()).round(new MathContext(3)),
@@ -286,9 +297,9 @@ public class Klarigi {
     ps
   }
 
-  def explainCluster(cid, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) {
+  def explainCluster(cid, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
     def scorer = new Scorer(ontoHelper, coefficients, data)
-    def candidates = scorer.scoreAllClasses(cid, excludeClasses, threads)
+    def candidates = scorer.scoreAllClasses(cid, excludeClasses, threads, includeAll)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
@@ -315,15 +326,15 @@ public class Klarigi {
     return res
   }
 
-  def explainClusters(groups, excludeClasses, scoreOnly, outputScores, outputType, powerMode, threads, debug) {
+  def explainClusters(groups, excludeClasses, scoreOnly, outputScores, outputType, powerMode, threads, debug, includeAll) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
     }
   }
 
-  def explainAllClusters(outputScores, excludeClasses, scoreOnly, outputType, powerMode, threads, debug) {
+  def explainAllClusters(outputScores, excludeClasses, scoreOnly, outputType, powerMode, threads, debug, includeAll) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug) ]
+      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
     }
   }
 

@@ -38,7 +38,8 @@ public class Classifier {
           def score = 0
           if(subeq.any { codes.containsKey(it) }) {
             //score = e.nPower * e.nIc
-            score = e.nExclusion * e.nIc
+            //score = e.nExclusion * e.nIc
+            score = e.nExclusion
           }
             
           return score

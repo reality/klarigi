@@ -47,6 +47,7 @@ class App {
       _ longOpt: 'min-inclusion', 'Explanations with inclusion below this level will not be considered for explanations.', args: 1
       _ longOpt: 'min-power', 'Explanations with power below this level will not be considered for explanations.', args: 1
       _ longOpt: 'min-ic', 'Explanations with IC below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'include-all', 'Ignore all min scores', type: Boolean
 
       _ longOpt: 'max-exclusion', 'Variables with exclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
       _ longOpt: 'max-inclusion', 'Variables with inclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
@@ -120,11 +121,11 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters(groups, excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'])
+        allExplanations = k.explainClusters([o['group']], excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['scores-only'], o['output-type'], o['power'], threads, o['debug'])
+        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['scores-only'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       }
 
       if(o['scores-only']) {
