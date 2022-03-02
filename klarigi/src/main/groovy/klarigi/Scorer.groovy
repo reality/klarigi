@@ -78,7 +78,6 @@ public class Scorer {
     }
 
     println 'done preprocessing'
-    println ass
 
     this.preScore = ass
   }
@@ -105,11 +104,9 @@ public class Scorer {
 
     v.nPower = 0 
     if(v.nInclusion + v.nExclusion > 0) {
-      v.nPower = (v.nInclusion * (v.nExclusion)) / (v.nInclusion + (v.nExclusion))
+      v.nPower = 2 * ((v.nInclusion * (v.nExclusion)) / (v.nInclusion + (v.nExclusion)))
     }
 
-    println this.preScore[c][cid].inc
-    println v
     explainers[c]  = v
 	}
 
