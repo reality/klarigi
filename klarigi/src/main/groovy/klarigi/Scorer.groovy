@@ -9,41 +9,108 @@ public class Scorer {
   private def ontoHelper
   private def data
   private def c 
+  private def sc
+  private def preScore
+  private def excludeClasses
 
-  Scorer(ontoHelper, coefficients, data) {
+  Scorer(ontoHelper, coefficients, data, excludeClasses, threads) {
     this.ontoHelper = ontoHelper
     this.data = data
     this.c = coefficients
+    this.excludeClasses = extendExcludeClasses(excludeClasses)
+
+    this.precalculateScores(threads)
+  }
+
+  private def precalculateScores(threads) {
+    println 'Precalculating'
+    def ass = new ConcurrentHashMap()
+
+    // TODO add excludeclasses here
+    def scMap = [:]
+    def toProcess = []
+    data.allAssociations.each { iri ->
+      toProcess << iri
+      def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(iri))
+      scMap[iri] = []
+      scMap[iri] << iri
+      ontoHelper.reasoner.getSuperClasses(ce, false).each { n ->
+        n.getEntities().each { sc ->
+          def dIri = sc.getIRI().toString()
+          scMap[iri] << dIri
+          toProcess << dIri
+        }
+      }
+    }
+
+    toProcess = toProcess.unique(false)
+
+    println "Processing ${toProcess.size()}"
+
+    toProcess.each { iri ->
+      ass[iri] = [:]
+      data.groupings.each { cid, v ->
+        ass[iri][cid] = [ incEnts: new ConcurrentHashMap(), inc: 0, exc: 0 ]
+      }
+    }
+
+// can further speed up by cutting out the minimum here
+// the point here is that we have excluded searches. every iteration is Business
+
+// so we only want one +1 per person per thing
+    GParsPool.withPool(threads) { p ->
+    data.associations.eachParallel { e, terms ->
+      terms.each { t, v ->
+        scMap[t].each { dt ->
+          data.egroups[e].each { g ->
+            ass[dt][g].incEnts[e] = true
+          }
+        } 
+      }
+    }
+    }
+
+    data.groupings.each { cid, v ->
+      toProcess.each { iri ->
+        ass[iri][cid].inc = ass[iri][cid].incEnts.size()
+        ass[iri][cid].exc = data.groupings[cid].size() - ass[iri][cid].inc
+      }
+    }
+
+    println 'done preprocessing'
+    println ass
+
+    this.preScore = ass
   }
 
   // so what if we could build a list of the classes of interest and their subclasses, and then go through it once 
-  private def processClass(explainers, cid, excludeClasses, c) {
+  private def processClass(explainers, cid, c) {
     if(excludeClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; }
-    def subclasses = getSubclasses(c)
-    subclasses << c
-    subclasses = subclasses.findAll { e -> !excludeClasses.contains(e) }
-		explainers[c] = [
-			ic: data.ic[c],
-			internalIncluded: data.groupings[cid].findAll { pid -> subclasses.any { sc -> data.associations[pid].containsKey(sc) } },
-      externalIncluded: data.groupings.collect { lcid, p ->
-        if(lcid == cid) { return []; }
-        p.findAll { pid ->
-          subclasses.any { sc -> data.associations[pid].containsKey(sc) }
-        }
-      }.flatten()
-		]
-    // How many of this term in this group
-    explainers[c].inclusion = explainers[c].internalIncluded.size()
 
-    // How many of this term in other groups
-    explainers[c].externalInclusion = explainers[c].externalIncluded.size()
+    def v = [
+      iri: c, 
+      nIc: data.ic[c],
+      nInclusion: this.preScore[c][cid].inc / data.groupings[cid].size(),
+      nExclusion: 0
+    ]
+    
+    def allInclusion = this.preScore[c].collect { k, vv -> vv.inc }.sum()
 
-    // This should be the number of entities in OTHER clusters that do NOT have this term.
-    explainers[c].externalExclusion = data.groupings.collect { lcid, p ->
-      if(lcid == cid) { 0 }
-      p.size()
-    }.sum() - explainers[c].externalInclusion
+    // G_j / E
+    def prop = ((data.groupings[cid].size()) / data.associations.size())
+
+    v.nExclusion = (this.preScore[c][cid].inc / allInclusion)
+    v.nExclusion = v.nExclusion - prop
+
+    v.nPower = 0 
+    if(v.nInclusion + v.nExclusion > 0) {
+      v.nPower = (v.nInclusion * (v.nExclusion)) / (v.nInclusion + (v.nExclusion))
+    }
+
+    println this.preScore[c][cid].inc
+    println v
+    explainers[c]  = v
 	}
 
   private def extendExcludeClasses(excludeClasses) {
@@ -56,8 +123,7 @@ public class Scorer {
   }
 
   private def normalise(explainers, cid, returnAll) {
-    explainers.findAll { k, v -> v.ic }
-      .collect { k, v ->
+      /*.collect { k, v ->
         v.nIc = v.ic // TODO this depends on an already normalised IC value...
         v.nInclusion = v.inclusion / data.groupings[cid].size()
 
@@ -81,7 +147,9 @@ public class Scorer {
 
         v.iri = k 
         v
-      }
+      }*/
+    explainers.findAll { k, v -> v.nIc }
+      .collect{ k, v -> v }
       .findAll { v ->
         if(!returnAll) {
           if(data.groupings.size() > 1) {
@@ -113,11 +181,11 @@ public class Scorer {
     return relevant
   }
 
-  def scoreClasses(cid, excludeClasses, threads, classes) {
+  def scoreClasses(cid, threads, classes) {
     scoreClasses(cid, excludeClasses, threads, classes, false)
   }
 
-  def scoreClasses(cid, excludeClasses, threads, classes, returnAll) {
+  def scoreClasses(cid, threads, classes, returnAll) {
     excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
@@ -131,13 +199,11 @@ public class Scorer {
     explainers
   }
 
-  def scoreAllClasses(cid, excludeClasses, threads) {
-    scoreAllClasses(cid, excludeClasses, threads, false)
+  def scoreAllClasses(cid, threads) {
+    scoreAllClasses(cid, threads, false)
   }
 
-  def scoreAllClasses(cid, excludeClasses, threads, returnAll) {
-    excludeClasses = extendExcludeClasses(excludeClasses)
-
+  def scoreAllClasses(cid, threads, returnAll) {
     // TODO i think we can use the allclasses?
     // or perhaps we're only interested in classes in this cluster?
     def classMap = [:]
@@ -152,7 +218,7 @@ public class Scorer {
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(threads) { p ->
       relevant.eachParallel {
-        processClass(explainers, cid, excludeClasses, it)
+        processClass(explainers, cid, it)
       }
     }
     explainers = normalise(explainers, cid, returnAll) // Note, this turns it into a list rather than a hashmap
@@ -181,7 +247,7 @@ public class Scorer {
         pIri = it.iri.replaceAll('_', '\\\\_')
       }
 
-        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+        out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nIc.toDouble().round(2)} \\\\"
     }
     out << "\\end{tabular}"
     out = out.join('\n')

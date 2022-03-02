@@ -28,8 +28,6 @@ public class Klarigi {
   //  for permutation, primarily, but there are probably other reasons that it's useful
   //  to keep around too...
   //  TODO: consider merging with above data, or in the class that eventually replaces that.
-  def allAssociations 
-
   def ontoHelper = [
     reasoner: null, 
     dataFactory: null,
@@ -38,15 +36,18 @@ public class Klarigi {
   def coefficients
   def verbose
   def icFactory
+  def scorer
 
-  Klarigi(o) {
+  Klarigi(o, excludeClasses, threads) {
     verbose = o['verbose']
 
     loadData(o['data'], o['pp'], o['group'], o['egl'])
     loadOntology(o['ontology'])
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'])
-    println 'hi'
+
     coefficients = Coefficients.Generate(o)
+
+    this.scorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, threads)
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
@@ -57,6 +58,7 @@ public class Klarigi {
     data = [
       groupings: [:],
       associations: [:],
+      egroups: [:],
       ic: [:]
     ]
     try {
@@ -104,6 +106,8 @@ public class Klarigi {
           }
         }
 
+        data.egroups[entity] = gs
+
         gs.each { g ->
           if(!data.groupings.containsKey(g)) {
             data.groupings[g] = []
@@ -129,7 +133,7 @@ public class Klarigi {
     }
 
     // kind of stupid but ok 
-    allAssociations = data.associations.collect { entity, terms ->
+    data.allAssociations = data.associations.collect { entity, terms ->
       terms.keySet().toList()
     }.flatten().unique(false)
 
@@ -144,7 +148,7 @@ public class Klarigi {
     data.associations.each { id, terms ->
       newSample[id] = [:]
       terms.each { // create randomly sampled profile of the same size
-        newSample[id][allAssociations[r.nextInt(allAssociations.size())]] = true
+        newSample[id][data.allAssociations[r.nextInt(data.allAssociations.size())]] = true
       }
     }
     return newSample
@@ -246,7 +250,7 @@ public class Klarigi {
         groupings: data.groupings,
         ic: data.ic
       ]
-      def scorer = new Scorer(ontoHelper, coefficients, subData)
+      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads)
 
       i++
       if((i % 100) == 0) {
@@ -255,7 +259,7 @@ public class Klarigi {
      
       ae.each { g, gp ->
         def cSet = ae[g].keySet().toList()
-        def candidates = scorer.scoreClasses(g, excludeClasses, threads, cSet, true)
+        def candidates = reScorer.scoreClasses(g, threads, cSet, true)
 
         candidates.each { v ->
           def k = v.iri
@@ -297,9 +301,8 @@ public class Klarigi {
     ps
   }
 
-  def explainCluster(cid, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
-    def scorer = new Scorer(ontoHelper, coefficients, data)
-    def candidates = scorer.scoreAllClasses(cid, excludeClasses, threads, includeAll)
+  def explainCluster(cid, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
+    def candidates = scorer.scoreAllClasses(cid, threads, includeAll)
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
@@ -326,19 +329,19 @@ public class Klarigi {
     return res
   }
 
-  def explainClusters(groups, excludeClasses, scoreOnly, outputScores, outputType, powerMode, threads, debug, includeAll) {
+  def explainClusters(groups, scoreOnly, outputScores, outputType, powerMode, threads, debug, includeAll) {
     data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
+      [ cluster: g, results: explainCluster(g, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
     }
   }
 
-  def explainAllClusters(outputScores, excludeClasses, scoreOnly, outputType, powerMode, threads, debug, includeAll) {
+  def explainAllClusters(outputScores, scoreOnly, outputType, powerMode, threads, debug, includeAll) {
     data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, excludeClasses, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
+      [ cluster: g, results: explainCluster(g, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
     }
   }
 
-  def reclassify(allExplanations, outClassScores, ecm, cwf, excludeClasses, threads) {
+  def reclassify(allExplanations, excludeClasses, outClassScores, ecm, cwf, threads) {
     if(cwf) { 
       ecm = false
 
@@ -348,12 +351,10 @@ public class Klarigi {
         assoc[it[1]] << 'http://purl.obolibrary.org/obo/' + it[0].replace(':','_')
       }
 
-      println assoc
-
-      def scorer = new Scorer(ontoHelper, coefficients, data)
+      def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, threads)
 
        allExplanations.each { exps ->
-         exps.results[2] = scorer.scoreClasses(exps.cluster, excludeClasses, threads, assoc[exps.cluster], true)
+         exps.results[2] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)
       }
     }
 

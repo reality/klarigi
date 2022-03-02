@@ -13,12 +13,11 @@ public class StepDown {
         def ef = candidates.findAll {
           it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
-        //println ef
+
+        // TODO this bit is the broken but
         totalCoverage = ((ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-        def totalExclusion = 0
-        if(data.groupings.size() > 1) {
-          totalExclusion = (1-(((ef.collect { it.externalInclusion }.flatten().unique(false).size()) / (data.groupings.collect {k,v->v.size()}.sum() - data.groupings[cid].size()))))*100
-        }
+
+
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         }

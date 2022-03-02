@@ -109,7 +109,7 @@ class App {
       }
     }
 
-    def k = new Klarigi(o)
+    def k = new Klarigi(o, excludeClasses, threads)
     if(!o['similarity-mode']) {
       def allExplanations 
       if(o['group-file']) {
@@ -121,11 +121,11 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], excludeClasses, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], excludeClasses, o['scores-only'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
       }
 
       if(o['scores-only']) {
@@ -147,7 +147,7 @@ class App {
       }
       
       if(o['reclassify']) {
-        k.reclassify(allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
+        k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], threads)
       }
       if(o['classify']) {
         k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
