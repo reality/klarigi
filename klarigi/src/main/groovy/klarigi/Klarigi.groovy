@@ -250,11 +250,17 @@ public class Klarigi {
     }
 
     (0..perms).each {
+      // TODO createData  function
       def subData = [
         associations: sampleData(),
         groupings: data.groupings,
         ic: data.ic
       ]
+      subData.allAssociations = subData.associations.collect { entity, terms ->
+        terms.keySet().toList()
+      }.flatten().unique(false)
+
+// TODO idk what the fuck
       def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads)
 
       i++

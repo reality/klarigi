@@ -56,6 +56,7 @@ public class Scorer {
     }
 
     // can further speed up by cutting out the minimum here
+    // becomes a PITA if you're using --classify-with-variables tho
     // the point here is that we have excluded searches. every iteration is Business
     // WTF was I talking about above? I suppose every iteration IS Business.
 
@@ -96,6 +97,7 @@ public class Scorer {
     if(excludeClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; } // Skip if we already have have a result for this class.
 
+println c
     // This is the object that contains the scores for this class.
     def v = [
       iri: c,
@@ -201,16 +203,16 @@ public class Scorer {
   }
 
   def scoreClasses(cid, threads, classes) {
-    scoreClasses(cid, excludeClasses, threads, classes, false)
+    scoreClasses(cid, threads, classes, false)
   }
 
   def scoreClasses(cid, threads, classes, returnAll) {
-    excludeClasses = extendExcludeClasses(excludeClasses)
+    //excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
     //GParsPool.withPool(threads) { p ->
     //  classes.eachParallel {
       classes.each {
-        processClass(explainers, cid, excludeClasses, it)
+        processClass(explainers, cid, it)
       }
     //}
 
