@@ -23,19 +23,11 @@ second should be a semi-colon delimited list of ontology terms
 associated with that entity. The third should be an identifier for 
 the group that this entity is in. This can be any string.
 
-So for example, here is a small example of patients described with HPO (if you're following this as a tutorial example, save this to *data.txt*):
+So for example, here is a small example of patients described with HPO:
 
 ```
-0 HP:0001510;HP:0040315 OMIM:604271
-1 HP:0004322;HP:0012496 OMIM:604271
-2 HP:0004322;HP:0009279 OMIM:604271
-3 HP:0001510;HP:0031960 OMIM:604271
-4 HP:0004322;HP:0012515 OMIM:604271
-5 HP:0012373;HP:0000565;HP:0012372;HP:0007773;HP:0007903;HP:0003779 OMIM:172870
-6 HP:0000539;HP:0000565;HP:0004329;HP:0004329;HP:0007903;HP:0004467 OMIM:172870
-7 HP:0000540;HP:0032012;HP:0007737;HP:0007773;HP:0007903;HP:0012234 OMIM:172870
-8 HP:0000540;HP:0000565;HP:0012372;HP:0004329;HP:0007903;HP:0012597 OMIM:172870
-9 HP:0000540;HP:0000565;HP:0007737;HP:0004327;HP:0007903;HP:0001557 OMIM:172870
+wget http://lokero.xyz/eg_data.tsv
+cat eg_data.tsv
 ```
 
 So we have ten patients here, with an incrementing identifier in the first
@@ -74,6 +66,10 @@ So, when you run the application, let's say with the command above, here is roug
 ### Options
 
 The above is the general workflow, however there are a number of command line options you can use to modify this behaviour.
+
+### Phenopacket Mode
+
+You can run Klarigi on a phenopacket file by using the *--pp* option, and then passing a PhenoPackets JSON file as the *--data* option. In the case that you want to read *many* Phenopackets, split across several files, you can also pass a directory to the *--data* argument, and the program will load all valid Phenopacket files in the directory. Currently Klarigi only supports phenopackets described in the JSON mode. It will also automatically use diagnosis as the set of groups. In future, it will support more. However, in the mean time, you can make use of the converted file; Klarigi will output a converted TSV (and print the name of the file to stdout) that you can modify to describe any group you want (note: when using the converted *tsv* file as your *--data* argument, you do not need to use the *-pp* switch). 
 
 #### Information Content
 
