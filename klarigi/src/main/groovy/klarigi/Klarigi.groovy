@@ -20,6 +20,11 @@ import org.apache.log4j.LogManager;
 
 import java.math.MathContext
 
+import java.util.concurrent.*
+import groovyx.gpars.*
+import groovyx.gpars.GParsPool
+
+
 public class Klarigi {
   def data
 
@@ -330,15 +335,20 @@ public class Klarigi {
   }
 
   def explainClusters(groups, scoreOnly, outputScores, outputType, powerMode, threads, debug, includeAll) {
-    data.groupings.findAll { g, v -> groups.contains(g) }.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
+    def toProcess = data.groupings.findAll { g, v -> groups.contains(g) }
+    def results = []
+
+    GParsPool.withPool(threads) { p ->
+      toProcess.eachParallel { g, v ->
+        results << [ cluster: g, results: explainCluster(g, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
+      }
     }
+
+    return results
   }
 
   def explainAllClusters(outputScores, scoreOnly, outputType, powerMode, threads, debug, includeAll) {
-    data.groupings.collect { g, v ->
-      [ cluster: g, results: explainCluster(g, powerMode, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
-    }
+    explainClusters(data.groupings.keySet().toList(), scoreOnly, outputScores, outputType, powerMode, threads, debug, includeAll)
   }
 
   def reclassify(allExplanations, excludeClasses, outClassScores, ecm, cwf, threads) {

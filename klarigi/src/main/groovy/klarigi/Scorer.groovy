@@ -45,6 +45,8 @@ public class Scorer {
 
     toProcess = toProcess.unique(false)
 
+    //toProcess = toProcess.findAll { c -> data.ic[c] >= this.c.MIN_IC } 
+
     println "Processing ${toProcess.size()}"
 
     toProcess.each { iri ->
@@ -58,8 +60,10 @@ public class Scorer {
 // the point here is that we have excluded searches. every iteration is Business
 
 // so we only want one +1 per person per thing
+def i = 0
     GParsPool.withPool(threads) { p ->
     data.associations.eachParallel { e, terms ->
+    println "${++i}"
       terms.each { t, v ->
         scMap[t].each { dt ->
           data.egroups[e].each { g ->
@@ -70,11 +74,15 @@ public class Scorer {
     }
     }
 
-    data.groupings.each { cid, v ->
+def z = 0
+    GParsPool.withPool(threads) { p ->
+    data.groupings.eachParallel { cid, v ->
+    println "${++z}"
       toProcess.each { iri ->
         ass[iri][cid].inc = ass[iri][cid].incEnts.size()
         ass[iri][cid].exc = data.groupings[cid].size() - ass[iri][cid].inc
       }
+    }
     }
 
     println 'done preprocessing'
@@ -91,16 +99,17 @@ public class Scorer {
       iri: c, 
       nIc: data.ic[c],
       nInclusion: this.preScore[c][cid].inc / data.groupings[cid].size(),
-      nExclusion: 0
+      nExclusion: 0,
+      fExclusion: 0
     ]
     
-    def allInclusion = this.preScore[c].collect { k, vv -> vv.inc }.sum()
+    v.allInclusion = this.preScore[c].collect { k, vv -> vv.inc }.sum()
 
     // G_j / E
     def prop = ((data.groupings[cid].size()) / data.associations.size())
 
-    v.nExclusion = (this.preScore[c][cid].inc / allInclusion)
-    v.nExclusion = v.nExclusion - prop
+    v.fExclusion = (this.preScore[c][cid].inc / v.allInclusion)
+    v.nExclusion = v.fExclusion - prop
 
     v.nPower = 0 
     if(v.nInclusion + v.nExclusion > 0) {
@@ -185,11 +194,12 @@ public class Scorer {
   def scoreClasses(cid, threads, classes, returnAll) {
     excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
-    GParsPool.withPool(threads) { p ->
-      classes.eachParallel {
+    //GParsPool.withPool(threads) { p ->
+    //  classes.eachParallel {
+      classes.each {
         processClass(explainers, cid, excludeClasses, it)
       }
-    }
+    //}
 
     // Note, this turns it into a list rather than a hashmap
     explainers = normalise(explainers, cid, returnAll) 
@@ -223,8 +233,8 @@ public class Scorer {
   }
 
   static def Write(cid, s, labels, fName) {
-    new File(fName).text = "iri\tinclusion\texclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
-      "${it.iri}\t${it.inclusion}\t${it.exclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
+    new File(fName).text = "iri\tallinclusion\tfullexclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
+      "${it.iri}\t${it.allInclusion}\t${it.fExclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
   }
 
