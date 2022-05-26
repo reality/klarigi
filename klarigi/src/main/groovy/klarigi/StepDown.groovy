@@ -14,27 +14,18 @@ public class StepDown {
           it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
 
-        // TODO this bit is the broken but
-        totalCoverage = ((ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }.collect { it.internalIncluded }.flatten().unique(false).size()) / data.groupings[cid].size()) * 100
-
+        // Total coverage is defined as the percentage of entities in the group that are associated with at least one of the explanatory classes.
+        def contributingEf = ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
+        def covered = data.groupings[cid].findAll { ee ->
+          contributingEf.any { data.associations[ee].containsKey(it.iri) }
+        }.size()
+        totalCoverage = (covered / data.groupings[cid].size()) * 100
 
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         }
         if(totalCoverage < (totalInclusionCutoff*100)) {
           totalCoverage = 0
-          /*if(icCutoff <= c.BOT_IC) {
-            icCutoff = c.BOT_POWER
-            
-            if(powerCutoff > c.BOT_POWER) {
-              powerCutoff -= c.STEP
-            } else {
-              powerCutoff = c.TOP_POWER
-              totalInclusionCutoff -= c.STEP
-            }
-          } else {
-            icCutoff -= c.STEP
-          }*/
           if(powerCutoff <= c.BOT_POWER) {
             powerCutoff = c.TOP_POWER
 
@@ -79,9 +70,9 @@ public class StepDown {
       } else {
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (p=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Expression: ${z.nPower.toDouble().round(2)} (p=${ps.powP}) (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
         } else {
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Power: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Expression: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
         }
       }
     }
@@ -117,7 +108,7 @@ public class StepDown {
       out << "{\\bf $cid ($s members)} & {\\bf Inclusion} & {\\bf IC} \\\\"
     } else {
       out << "\\begin{tabular}{p{5cm}|l|l|l|l}"
-      out << "{\\bf $cid ($s members)} & {\\bf Power} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
+      out << "{\\bf $cid ($s members)} & {\\bf Expression} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
     }
 
     res[0].sort { -it.nPower }.each {
@@ -133,16 +124,16 @@ public class StepDown {
       if(egl) {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nIc.toDouble().round(2)} \\\\"
         } else {
-          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nInclusion.toDouble().round(2)} & ${it.nIc.toDouble().round(2)} \\\\"
         }
       } else {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} (p=${ps.powP}) & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.nIc.toDouble().round(2)} \\\\"
         } else {
-          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.ic.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nIc.toDouble().round(2)} \\\\"
         }
       }
     }

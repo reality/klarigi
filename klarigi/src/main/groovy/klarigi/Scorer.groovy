@@ -109,9 +109,9 @@ public class Scorer {
       // Normalised inclusion score (proportion of entities in the group annotated with the term)
       nInclusion: this.preScore[c][cid].inc / data.groupings[cid].size(),
 
-      // ()
+      // fExclusion is unweighted exclusion score, nExclusion is the final score
       fExclusion: 0,
-      nExclusion: 0
+      nExclusion: 0,
 
       // The expression score. Legacy naming!
       nPower: 0
