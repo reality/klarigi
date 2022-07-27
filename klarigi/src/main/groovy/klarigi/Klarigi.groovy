@@ -111,6 +111,7 @@ public class Klarigi {
           }
         }
 
+        // egroups is a map of each entity to the groups it's associates with
         data.egroups[entity] = gs
 
         gs.each { g ->
@@ -254,15 +255,14 @@ public class Klarigi {
       def subData = [
         associations: sampleData(),
         groupings: data.groupings,
+        egroups: data.egroups, 
         ic: data.ic
       ]
       subData.allAssociations = subData.associations.collect { entity, terms ->
         terms.keySet().toList()
       }.flatten().unique(false)
 
-// TODO idk what the fuck
       def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads)
-
       i++
       if((i % 100) == 0) {
         println i
@@ -281,12 +281,12 @@ public class Klarigi {
           cSet -= k
         }
 
-        // Add zeros for remaining bois
-        cSet.each { k ->
+        // Add zeros for remaining bois, which there are no longer any of, because scoreClasses should return a 0 when we ask for something not in the dataset now
+        /*cSet.each { k ->
           ae[g][k].incVals << 0
           ae[g][k].excVals << 0
           ae[g][k].powVals << 0
-        }
+        }*/
       }
     }
 

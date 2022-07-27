@@ -78,7 +78,7 @@ public class Scorer {
     def z = 0
     GParsPool.withPool(threads) { p ->
     data.groupings.eachParallel { cid, v ->
-    println "${++z}"
+      println "${++z}"
       toProcess.each { iri ->
         ass[iri][cid].inc = ass[iri][cid].incEnts.size()
         ass[iri][cid].exc = data.groupings[cid].size() - ass[iri][cid].inc
@@ -97,19 +97,14 @@ public class Scorer {
     if(excludeClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; } // Skip if we already have have a result for this class.
 
-println c
     // This is the object that contains the scores for this class.
     def v = [
       iri: c,
-
       // Normalised information content score.
       nIc: data.ic[c],
 
-      // All inclusion (total entities annotated with this class across all clusters) (used in the calculation of the exclusion score)
-      allInclusion: this.preScore[c].collect { k, vv -> vv.inc }.sum(),
-
-      // Normalised inclusion score (proportion of entities in the group annotated with the term)
-      nInclusion: this.preScore[c][cid].inc / data.groupings[cid].size(),
+      allInclusion: 0,
+      nInclusion: 0,
 
       // fExclusion is unweighted exclusion score, nExclusion is the final score
       fExclusion: 0,
@@ -118,16 +113,24 @@ println c
       // The expression score. Legacy naming!
       nPower: 0
     ]
-    
-    // Initial, unweighted, 
-    v.fExclusion = (this.preScore[c][cid].inc / v.allInclusion)
-    // This adds the subtraction of G_j / E (the proportion of entities in the corpus that are associated with the currently considered group) to form the final exclusion score.
-    v.nExclusion = v.fExclusion - ((data.groupings[cid].size()) / data.associations.size())
 
-    // Calculate the harmonic mean of exclusion and inclusion, forming the expression score.
-    v.nPower = 0 
-    if(v.nInclusion + v.nExclusion > 0) {
-      v.nPower = 2 * ((v.nInclusion * (v.nExclusion)) / (v.nInclusion + (v.nExclusion)))
+    if(this.preScore.containsKey(c)) {
+      // All inclusion (total entities annotated with this class across all clusters) (used in the calculation of the exclusion score)
+      v.allInclusion = this.preScore[c].collect { k, vv -> vv.inc }.sum(),
+
+      // Normalised inclusion score (proportion of entities in the group annotated with the term)
+      v.nInclusion = this.preScore[c][cid].inc / data.groupings[cid].size(),
+    
+      // Initial, unweighted, 
+      v.fExclusion = (this.preScore[c][cid].inc / v.allInclusion)
+      // This adds the subtraction of G_j / E (the proportion of entities in the corpus that are associated with the currently considered group) to form the final exclusion score.
+      v.nExclusion = v.fExclusion - ((data.groupings[cid].size()) / data.associations.size())
+
+      // Calculate the harmonic mean of exclusion and inclusion, forming the expression score.
+      v.nPower = 0 
+      if(v.nInclusion + v.nExclusion > 0) {
+        v.nPower = 2 * ((v.nInclusion * (v.nExclusion)) / (v.nInclusion + (v.nExclusion)))
+      }
     }
 
     explainers[c] = v
