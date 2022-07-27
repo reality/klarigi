@@ -281,12 +281,12 @@ public class Klarigi {
           cSet -= k
         }
 
-        // Add zeros for remaining bois, which there are no longer any of, because scoreClasses should return a 0 when we ask for something not in the dataset now
-        /*cSet.each { k ->
+        // here we add zeroes for all items we didn't receive values for (ie they were ignored because they were not represented in the sample at all)
+        cSet.each { k ->
           ae[g][k].incVals << 0
           ae[g][k].excVals << 0
           ae[g][k].powVals << 0
-        }*/
+        }
       }
     }
 
@@ -294,7 +294,6 @@ public class Klarigi {
     ae.each { c, terms ->
       ps[c] = [:]
       terms.each { iri, cv ->
-      if(iri == "http://purl.obolibrary.org/obo/HP_0009763") { println cv.incVals }
         ps[c][iri] = [
           incP: new BigDecimal(cv.incVals.findAll { it >= cv.nInclusion }.size() / cv.incVals.size()).round(new MathContext(3)),
           excP: new BigDecimal(cv.excVals.findAll { it >= cv.nExclusion }.size() / cv.excVals.size()).round(new MathContext(3)),
