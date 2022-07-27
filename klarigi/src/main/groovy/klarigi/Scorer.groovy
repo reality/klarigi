@@ -13,21 +13,38 @@ public class Scorer {
   private def preScore
   private def excludeClasses
 
+  // Stupid repitition here TODO fix inelegant
   Scorer(ontoHelper, coefficients, data, excludeClasses, threads) {
+    this.setup(ontoHelper, coefficients, data, excludeClasses, threads)
+    this.precalculateScores(threads)
+  }
+
+  Scorer(ontoHelper, coefficients, data, excludeClasses, threads, manToProcess) {
+    this.setup(ontoHelper, coefficients, data, excludeClasses, threads)
+    this.precalculateScores(threads, manToProcess)
+  }
+
+  private def setup(ontoHelper, coefficients, data, excludeClasses, threads) {
     this.ontoHelper = ontoHelper
     this.data = data
     this.c = coefficients
     this.excludeClasses = extendExcludeClasses(excludeClasses)
-    this.precalculateScores(threads)
   }
 
   private def precalculateScores(threads) {
+    precalculateScores(threads, false)
+  }
+
+  private def precalculateScores(threads, manToProcess) {
     def ass = new ConcurrentHashMap()
 
     // TODO add excludeclasses here
     def scMap = [:]
     def toProcess = []
-    data.allAssociations.each { iri ->
+
+    def tp = data.allAssociations
+    if(manToProcess) { tp = manToProcess }
+    tp.each { iri ->
       toProcess << iri
       def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(iri))
       scMap[iri] = []
@@ -42,10 +59,13 @@ public class Scorer {
     }
 
     toProcess = toProcess.unique(false)
+    /*if(manToProcess) {
+      toProcess = manToProcess
+    }*/
 
     //toProcess = toProcess.findAll { c -> data.ic[c] >= this.c.MIN_IC } 
 
-    println "Processing ${toProcess.size()}"
+    //println "Processing ${toProcess.size()}"
 
     toProcess.each { iri ->
       ass[iri] = [:]
@@ -93,6 +113,7 @@ public class Scorer {
   private def processClass(explainers, cid, c) {
     if(excludeClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; } // Skip if we already have have a result for this class.
+    if(!this.preScore.containsKey(c)) { return; } // For example, if it's in a list we're asking about but not in the dataset, because of permutation sampling
 
     // This is the object that contains the scores for this class.
     def v = [
@@ -115,8 +136,13 @@ public class Scorer {
       nPower: 0
     ]
     
+    if(v.allInclusion == 0) { // another edge case when calling the shots for precalc in permutation
+      return;
+    }
+
     // Initial, unweighted, 
     v.fExclusion = (this.preScore[c][cid].inc / v.allInclusion)
+
     // This adds the subtraction of G_j / E (the proportion of entities in the corpus that are associated with the currently considered group) to form the final exclusion score.
     v.nExclusion = v.fExclusion - ((data.groupings[cid].size()) / data.associations.size())
 

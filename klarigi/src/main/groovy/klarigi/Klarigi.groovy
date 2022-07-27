@@ -237,21 +237,25 @@ public class Klarigi {
   }
 
   def permutationTest(allExplanations, excludeClasses, threads, perms) {
-    def i = 0
+    println "Doing permutation tests... This may take a while..."
+    println "Tip: Don't use p-values produced by this process to inform hyperparameter optimisation. Beware multiple testing!"
 
+    def i = 0
     def ae = [:] 
+    def allCandidates = []
     allExplanations.each { a ->
       ae[a.cluster] = [:]
-      a.results[0].each { z ->
+      a.results[2].each { z ->
         ae[a.cluster][z.iri] = z 
         ae[a.cluster][z.iri].incVals = [ z.nInclusion ]
         ae[a.cluster][z.iri].excVals = [ z.nExclusion ]
         ae[a.cluster][z.iri].powVals = [ z.nPower ]
+        allCandidates << z.iri
       }
     }
+    allCandidates = allCandidates.unique(false)
 
     (0..perms).each {
-      // TODO createData  function
       def subData = [
         associations: sampleData(),
         groupings: data.groupings,
@@ -262,7 +266,7 @@ public class Klarigi {
         terms.keySet().toList()
       }.flatten().unique(false)
 
-      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads)
+      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads, allCandidates)
       i++
       if((i % 100) == 0) {
         println i
