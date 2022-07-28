@@ -4,7 +4,7 @@ import org.semanticweb.owlapi.model.IRI
 import be.cylab.java.roc.*
 
 public class Classifier {
-  static def classify(allExplanations, data, ontoHelper, ecm) {
+  static def classify(c, allExplanations, data, ontoHelper, ecm) {
     def subclassCache = [:]
 
     def metrics = [:]
@@ -15,6 +15,15 @@ public class Classifier {
       ]
     }
 
+    def sterms = [:]
+    allExplanations.each { exps ->
+      sterms[exps.cluster] = exps.results[2]
+      if(ecm) { sterms[exps.cluster] = exps.results[0] }
+
+      def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster]) //.collect { it.iri })
+      println "Classifying '${exps.cluster}' using candidate set with OI: $totalCoverage"
+    }
+
     //iterate each entity
     data.associations.each { entity, codes ->
       // Iterate each group
@@ -22,12 +31,8 @@ public class Classifier {
       
       allExplanations.each { exps ->
         scores[exps.cluster] = 1
-        def sterms = exps.results[2]
-        if(ecm) {
-          sterms = exps.results[0]
-        }
 
-        def rs = sterms.collect { e ->
+        def rs = sterms[exps.cluster].collect { e ->
           // Get subclasses + equivalent of this explanatory class
           if(!subclassCache.containsKey(e.iri)) {
             def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
@@ -48,13 +53,13 @@ public class Classifier {
         }
       }
 
-      scores.each { c, v ->
+      scores.each { d, v ->
         def t = 0
-        if(data.groupings[c].contains(entity)) {
+        if(data.groupings[d].contains(entity)) {
           t = 1
         }
-        metrics[c].scores << v
-        metrics[c].truths << t
+        metrics[d].scores << v
+        metrics[d].truths << t
       }
     }
 

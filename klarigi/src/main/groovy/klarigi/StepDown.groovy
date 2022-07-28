@@ -14,12 +14,14 @@ public class StepDown {
           it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
 
+        totalCoverage = CalculateOI(c, cid, data, ef)
+
         // Total coverage is defined as the percentage of entities in the group that are associated with at least one of the explanatory classes.
-        def contributingEf = ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
+        /*def contributingEf = ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
         def covered = data.groupings[cid].findAll { ee ->
           contributingEf.any { data.associations[ee].containsKey(it.iri) }
         }.size()
-        totalCoverage = (covered / data.groupings[cid].size()) * 100
+        totalCoverage = (covered / data.groupings[cid].size()) * 100*/
 
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
@@ -47,6 +49,15 @@ public class StepDown {
     }
 
     return stepDown(candidates, c.TOP_IC, c.TOP_POWER, c.TOP_TOTAL_INCLUSION)
+  }
+
+  // We don't use the associations in data.associations, in case we want to use a different
+  static def CalculateOI(c, cid, data, candidates) {
+    def contributingEf = candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
+    def covered = data.groupings[cid].findAll { ee ->
+      contributingEf.any { data.associations[ee].containsKey(it.iri) }
+    }.size()
+    return (covered / data.groupings[cid].size()) * 100;
   }
 
   static def Print(cid, res, pVals, egl, labels, s, toFile, members, printMembers) {

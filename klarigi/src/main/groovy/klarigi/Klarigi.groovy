@@ -245,7 +245,7 @@ public class Klarigi {
     def allCandidates = []
     allExplanations.each { a ->
       ae[a.cluster] = [:]
-      a.results[2].each { z ->
+      a.results[0].each { z -> 
         ae[a.cluster][z.iri] = z 
         ae[a.cluster][z.iri].incVals = [ z.nInclusion ]
         ae[a.cluster][z.iri].excVals = [ z.nExclusion ]
@@ -377,7 +377,7 @@ public class Klarigi {
       }
     }
 
-    def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
+    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, ecm)
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
