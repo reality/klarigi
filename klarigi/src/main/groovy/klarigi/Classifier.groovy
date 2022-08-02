@@ -20,7 +20,7 @@ public class Classifier {
       sterms[exps.cluster] = exps.results[2]
       if(ecm) { sterms[exps.cluster] = exps.results[0] }
 
-      def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster]) //.collect { it.iri })
+      def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], true) //.collect { it.iri })
       println "Classifying '${exps.cluster}' using candidate set with OI: $totalCoverage"
     }
 
