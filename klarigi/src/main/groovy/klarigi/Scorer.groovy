@@ -146,9 +146,9 @@ public class Scorer {
     // This adds the subtraction of G_j / E (the proportion of entities in the corpus that are associated with the currently considered group) to form the final exclusion score.
     v.nExclusion = v.fExclusion - ((data.groupings[cid].size()) / data.associations.size())
 
-    if(v.fExclusion == 1) { 
+    /*if(v.fExclusion == 1) { 
       v.nExclusion = 1
-    }
+    }*/
 
     // Calculate the harmonic mean of exclusion and inclusion, forming the expression score.
     v.nPower = 0 
@@ -282,6 +282,7 @@ public class Scorer {
   static def WriteLaTeX(cid, res, labels, fName) {
     def out = []
 
+    out << "\\begin{tabular}"
     out << "{\\bf Class} & {\\bf Power} & {\\bf Inclusivity} & & {\\bf Exclusivity} & {\\bf Specificity} \\\\"
     out << "\\hline \\hline"
 

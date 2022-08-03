@@ -82,6 +82,7 @@ public class StepDown {
         }
 
       } else {
+        // TODO it doesn't print the pvals here/
         if(pVals) {
           def ps = pVals[z.iri]
           out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)}, (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
@@ -145,7 +146,7 @@ public class StepDown {
       } else {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.nIc.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.nIc.toDouble().round(2)} \\\\"
         } else {
           out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nIc.toDouble().round(2)} \\\\"
         }
