@@ -126,6 +126,8 @@ public class StepDown {
       out << "{\\bf $cid ($s members)} & {\\bf r-score} & {\\bf Inclusion} & {\\bf Exclusion} & {\\bf IC} \\\\"
     }
 
+    out << "\\hline \\hline"
+
     res[0].sort { -it.nPower }.each {
       def pIri = it.iri
       if(pIri =~ 'obolibrary.org') {
@@ -152,12 +154,12 @@ public class StepDown {
         }
       }
     }
-    if(egl) {
-
-    } else {
-      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - \\\\ "
-    }
     out << "\\hline"
+    if(egl) {
+      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - \\\\ "
+    } else {
+      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - & - \\\\ "
+    }
     out << "\\end{tabular}"
     out = out.join('\n')
 
