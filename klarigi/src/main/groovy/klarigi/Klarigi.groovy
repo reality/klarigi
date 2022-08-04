@@ -51,8 +51,9 @@ public class Klarigi {
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'])
 
     coefficients = Coefficients.Generate(o)
+    if(o['egl']) { coefficients['min-exclusion'] = 0 }
 
-    this.scorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, threads)
+    this.scorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, o['egl'], threads)
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
@@ -266,7 +267,7 @@ public class Klarigi {
         terms.keySet().toList()
       }.flatten().unique(false)
 
-      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, threads, allCandidates)
+      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, false, threads, allCandidates)
       i++
       if((i % 100) == 0) {
         println i
@@ -370,7 +371,7 @@ public class Klarigi {
         assoc[it[1]] << 'http://purl.obolibrary.org/obo/' + it[0].replace(':','_')
       }
 
-      def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, threads)
+      def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, false, threads)
 
        allExplanations.each { exps ->
          exps.results[2] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)

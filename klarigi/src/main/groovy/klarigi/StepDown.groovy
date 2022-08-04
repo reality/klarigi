@@ -2,7 +2,7 @@ package klarigi
 
 
 public class StepDown {
-  static def Run(c, cid, candidates, data, debug) {
+  static def Run(c, cid, candidates, data, egl, debug) {
     RunNewAlgorithm(c, cid, candidates, data, debug)
   }
 
@@ -21,7 +21,7 @@ public class StepDown {
         def covered = data.groupings[cid].findAll { ee ->
           contributingEf.any { data.associations[ee].containsKey(it.iri) }
         }.size()
-        totalCoverage = (covered / data.groupings[cid].size()) * 100*/
+        totalCoverage = (covered / data.groupings[cid].size()) * 99*/
 
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
@@ -76,7 +76,7 @@ public class StepDown {
       if(egl) {
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP}), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), IC: ${z.nIc.toDouble().round(2)}"
         } else {
           out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
         }
@@ -85,7 +85,7 @@ public class StepDown {
         // TODO it doesn't print the pvals here/
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)}, (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP})), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)}, (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP.toDouble().round(3)})), IC: ${z.nIc.toDouble().round(2)}"
         } else {
           out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
         }
@@ -146,7 +146,7 @@ public class StepDown {
       } else {
         if(pVals) {
           def ps = pVals[it.iri]
-          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP}) & ${it.nIc.toDouble().round(2)} \\\\"
+          out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}) & ${it.nExclusion.toDouble().round(2)} (p=${ps.excP.toDouble().round(3)}) & ${it.nIc.toDouble().round(2)} \\\\"
         } else {
           out << "${labels[it.iri]} (${pIri}) & ${it.nPower.toDouble().round(2)} & ${it.nInclusion.toDouble().round(2)} & ${it.nExclusion.toDouble().round(2)} & ${it.nIc.toDouble().round(2)} \\\\"
         }

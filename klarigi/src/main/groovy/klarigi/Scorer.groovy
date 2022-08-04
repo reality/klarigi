@@ -12,23 +12,24 @@ public class Scorer {
   private def sc
   private def preScore
   private def excludeClasses
+  private def egl
 
-  // Stupid repitition here TODO fix inelegant
   Scorer(ontoHelper, coefficients, data, excludeClasses, threads) {
-    this.setup(ontoHelper, coefficients, data, excludeClasses, threads)
+    this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
     this.precalculateScores(threads)
   }
 
-  Scorer(ontoHelper, coefficients, data, excludeClasses, threads, manToProcess) {
-    this.setup(ontoHelper, coefficients, data, excludeClasses, threads)
+  Scorer(ontoHelper, coefficients, data, excludeClasses, egl, threads, manToProcess) {
+    this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
     this.precalculateScores(threads, manToProcess)
   }
 
-  private def setup(ontoHelper, coefficients, data, excludeClasses, threads) {
+  private def setup(ontoHelper, coefficients, data, excludeClasses, egl, threads) {
     this.ontoHelper = ontoHelper
     this.data = data
     this.c = coefficients
     this.excludeClasses = extendExcludeClasses(excludeClasses)
+    this.egl = egl
   }
 
   private def precalculateScores(threads) {
@@ -170,34 +171,11 @@ public class Scorer {
   }
 
   private def normalise(explainers, cid, returnAll) {
-      /*.collect { k, v ->
-        v.nIc = v.ic // TODO this depends on an already normalised IC value...
-        v.nInclusion = v.inclusion / data.groupings[cid].size()
-
-        v.nExclusion = 1
-        if(data.groupings.size() > 1) {
-          v.nExclusion = 0
-          if((v.inclusion + v.externalInclusion) > 0) {
-            v.nExclusion = v.inclusion / (v.inclusion + v.externalInclusion)
-          }
-
-          def prop = ((data.groupings[cid].size()) / data.associations.size())
-          v.nExclusion -= prop
-
-          v.nPower = 0 
-          if(v.nInclusion + v.nExclusion > 0) {
-            v.nPower = (v.nInclusion * (1-v.nExclusion)) / (v.nInclusion + (1-v.nExclusion))
-          }
-        } else {
-          v.nPower = v.nInclusion
-        }
-
-        v.iri = k 
-        v
-      }*/
     explainers.findAll { k, v -> v.nIc }
-      .collect{ k, v -> v }
-      .findAll { v ->
+      .collect{ k, v -> 
+        if(egl) { v.nPower = v.nInclusion }
+        v 
+      }.findAll { v ->
         if(!returnAll) {
           if(data.groupings.size() > 1) {
             return v.nIc >= c.MIN_IC && 
@@ -233,14 +211,14 @@ public class Scorer {
   }
 
   def scoreClasses(cid, threads, classes, returnAll) {
-    //excludeClasses = extendExcludeClasses(excludeClasses)
     def explainers = new ConcurrentHashMap()
-    //GParsPool.withPool(threads) { p ->
-    //  classes.eachParallel {
+    GParsPool.withPool(threads) { p ->
+    classes.eachParallel {
       classes.each {
         processClass(explainers, cid, it)
       }
-    //}
+    }
+    }
 
     // Note, this turns it into a list rather than a hashmap
     explainers = normalise(explainers, cid, returnAll) 

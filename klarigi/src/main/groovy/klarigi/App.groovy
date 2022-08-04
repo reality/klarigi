@@ -135,7 +135,11 @@ class App {
 
       def pVals = [:]
       if(o['perms']) {
-        pVals = k.permutationTest(allExplanations, excludeClasses, threads, Integer.parseInt(o['perms']))
+        if(o['egl']) { 
+          println 'Skipping permutation testing because in EGL mode.'
+        } else {
+          pVals = k.permutationTest(allExplanations, excludeClasses, threads, Integer.parseInt(o['perms']))
+        }
       }
 
       allExplanations.each {
@@ -146,17 +150,20 @@ class App {
         k.writeDataframe('train', allExplanations)
       }
       
-      if(o['reclassify']) {
-        k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], threads)
-      }
-      if(o['classify']) {
-        k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
-
-        if(o['output-exp-dataframe']) {
-          k.writeDataframe('test', allExplanations)
+      if(o['egl']) { 
+        println 'Skipping classification options because in EGL mode.'
+      } else {
+        if(o['reclassify']) {
+          k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], threads)
+        }
+        if(o['classify']) {
+          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
         }
       }
 
+      if(o['output-exp-dataframe']) {
+        k.writeDataframe('test', allExplanations)
+      }
     } else {
       k.genSim(o['output'], o['group'])
     }
