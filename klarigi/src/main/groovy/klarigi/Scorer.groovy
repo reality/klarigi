@@ -14,7 +14,7 @@ public class Scorer {
   private def excludeClasses
   private def egl
 
-  Scorer(ontoHelper, coefficients, data, excludeClasses, threads) {
+  Scorer(ontoHelper, coefficients, data, excludeClasses, egl, threads) {
     this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
     this.precalculateScores(threads)
   }

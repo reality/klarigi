@@ -152,7 +152,11 @@ public class StepDown {
         }
       }
     }
-    out << "{\\em Overall} & - & ${res[1].toDouble().round(2)} & - & - \\\\ "
+    if(egl) {
+
+    } else {
+      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - \\\\ "
+    }
     out << "\\hline"
     out << "\\end{tabular}"
     out = out.join('\n')
