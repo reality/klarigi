@@ -69,18 +69,18 @@ public class StepDown {
       if(egl) {
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), IC: ${z.nIc.toDouble().round(2)}"
         } else {
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
+          out << "  ${labels[z.iri]} (${z.iri}), Inclusion: ${z.nInclusion.toDouble().round(2)}, IC: ${z.nIc.toDouble().round(2)}"
         }
 
       } else {
         // TODO it doesn't print the pvals here/
         if(pVals) {
           def ps = pVals[z.iri]
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)}, (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP.toDouble().round(3)})), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)}, (inc: ${z.nInclusion.toDouble().round(2)} (p=${ps.incP.toDouble().round(3)}), exc: ${z.nExclusion.toDouble().round(2)} (p=${ps.excP.toDouble().round(3)})), IC: ${z.nIc.toDouble().round(2)}"
         } else {
-          out << "  IRI: ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
+          out << "  ${labels[z.iri]} (${z.iri}), r-score: ${z.nPower.toDouble().round(2)} (inc: ${z.nInclusion.toDouble().round(2)}, exc: ${z.nExclusion.toDouble().round(2)}), IC: ${z.nIc.toDouble().round(2)}"
         }
       }
     }
