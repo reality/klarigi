@@ -22,12 +22,12 @@ plugins {
 
 java {
     toolchain {
-            languageVersion.set(JavaLanguageVersion.of(11))
+            languageVersion.set(JavaLanguageVersion.of(10))
                 }
                 }
 
-//sourceCompatibility = '12'
-//targetCompatibility = '12'
+//sourceCompatibility = '11'
+//targetCompatibility = '11'
 
 repositories {
     // Use Maven Central for resolving dependencies.

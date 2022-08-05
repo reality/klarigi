@@ -227,14 +227,14 @@ public class Klarigi {
           }
         }
       }
+   
+      // Set class props (reasoning also performed here)
+      ontoHelper.dataFactory = manager.getOWLDataFactory()
+      ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
+      ontoHelper.labels = labels
     } catch(e) {
       HandleError(e, verbose, "Error loading of processing the ontology file ($ontologyFile)")
     }
-   
-    // Set class props (reasoning also performed here)
-    ontoHelper.dataFactory = manager.getOWLDataFactory()
-    ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
-    ontoHelper.labels = labels
 
     if(verbose) {
       println "Done loading the ontology"
