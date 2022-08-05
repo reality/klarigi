@@ -41,12 +41,13 @@ class App {
       _ longOpt: 'top-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
       _ longOpt: 'bot-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
       _ longOpt: 'top-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
-      _ longOpt: 'bot-power', 'Min acceptable value of power.', args: 1
+      _ longOpt: 'bot-r-score', 'Min acceptable value of r-score for stepdown algorithm.', args: 1
 
-      _ longOpt: 'min-exclusion', 'Explanations with exclusion below this level will not be considered for explanations.', args: 1
-      _ longOpt: 'min-inclusion', 'Explanations with inclusion below this level will not be considered for explanations.', args: 1
-      _ longOpt: 'min-power', 'Explanations with power below this level will not be considered for explanations.', args: 1
-      _ longOpt: 'min-ic', 'Explanations with IC below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-exclusion', 'Candidate restriction: Terms with exclusion below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-inclusion', 'Candidate restriction: Terms with inclusion below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-r-score', 'Candidate restriction: Terms with r-score below this level will not be considered for explanations.', args: 1
+      _ longOpt: 'min-ic', 'Candidate restriction: Terms with IC below this level will not be considered for explanations.', args: 1
+
       _ longOpt: 'include-all', 'Ignore all min scores', type: Boolean
 
       _ longOpt: 'max-exclusion', 'Variables with exclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
@@ -55,15 +56,13 @@ class App {
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
       _ longOpt: 'debug', 'Print some debug output', type: Boolean
 
-      _ longOpt: 'power', 'DEPRECATED: Use modification of algorithm which uses normalised power instead of inc/exc', type: Boolean
-
       _ longOpt: 'scores-only', 'Do not run StepDown algorithm. Useful if you only want to save scores.', type: Boolean
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
       ecm longOpt: 'explainers-classify-mode', 'Only use the smaller set of explanatory variables for classification.', type: Boolean
       _ longOpt: 'classify-with-variables', 'Instead of using Klarigi\'s results to (re)-classify with, use the terms specified in the given file. The file should be a two-column TSV. First column is a term ID, the second is the group association (group this variable should be used to explain).', args: 1
 
-      p longOpt: 'perms', 'Do permutation testing to provide p values for power, inclusion, and exclusion.', args: 1
+      p longOpt: 'perms', 'Do permutation testing to provide p values for inclusion, and exclusion.', args: 1
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
@@ -121,11 +120,11 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], o['include-all'])
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], o['include-all'])
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], o['power'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], threads, o['debug'], o['include-all'])
       }
 
       if(o['scores-only']) {
