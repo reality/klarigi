@@ -16,13 +16,6 @@ public class StepDown {
 
         totalCoverage = CalculateOI(c, cid, data, ef, false)
 
-        // Total coverage is defined as the percentage of entities in the group that are associated with at least one of the explanatory classes.
-        /*def contributingEf = ef.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
-        def covered = data.groupings[cid].findAll { ee ->
-          contributingEf.any { data.associations[ee].containsKey(it.iri) }
-        }.size()
-        totalCoverage = (covered / data.groupings[cid].size()) * 99*/
-
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
         }

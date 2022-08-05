@@ -77,17 +77,30 @@ class App {
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
     }
 
-    if(args[0] == '-h' || args[0] == '--help') {
-      cliBuilder.usage(); return;
+    if(args.size() == 0 || (args.size() > 0 && (args[0] == '-h' || args[0] == '--help'))) {
+      cliBuilder.usage(); 
+      System.exit(0)
     }
     
     SLF4JSilencer.silence();
 
     def o = cliBuilder.parse(args)
-    
-    if(o.h) { 
-      cliBuilder.usage()
+
+    if(!o || (o && o.h)) { 
+      cliBuilder.usage(); 
+      System.exit(0)
     }
+
+    // For some reason, the required bit doesn't work above. Stupid.
+    def REQUIRED_OPTIONS = [ 'data', 'ontology' ]
+    def missingOptions = false
+    REQUIRED_OPTIONS.each {
+      if(!o[it] || o[it] == '') {
+        println "Error: You must pass a $it option. See -h for more info about parameters."
+        missingOptions = true
+      }
+    }
+    if(missingOptions) { System.exit(1) }
 
     def threads = 1
     if(o['threads']) {

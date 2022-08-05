@@ -204,27 +204,31 @@ public class Klarigi {
       logger.setLevel(Level.OFF);
     }
 
-    // load ontology
-    def manager = OWLManager.createOWLOntologyManager()
-    def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
-    //def progressMonitor = new ConsoleProgressMonitor()
-    def config = new SimpleConfiguration()
-    def elkFactory = new ElkReasonerFactory() // cute
+    try {
+      // load ontology
+      def manager = OWLManager.createOWLOntologyManager()
+      def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
+      //def progressMonitor = new ConsoleProgressMonitor()
+      def config = new SimpleConfiguration()
+      def elkFactory = new ElkReasonerFactory() // cute
 
-    // load labels
-    def labels = [:]
-    ontology.getClassesInSignature(true).each { cl ->
-      def iri = cl.getIRI().toString()
-      EntitySearcher.getAnnotations(cl, ontology).each { anno ->
-        def property = anno.getProperty()
-        OWLAnnotationValue val = anno.getValue()
-        if(val instanceof OWLLiteral) {
-          def literal = val.getLiteral()
-          if((property.isLabel() || property.toString() == "<http://www.w3.org/2004/02/skos/core#prefLabel>") && !labels.containsKey(iri)) {
-            labels[iri] = literal
+      // load labels
+      def labels = [:]
+      ontology.getClassesInSignature(true).each { cl ->
+        def iri = cl.getIRI().toString()
+        EntitySearcher.getAnnotations(cl, ontology).each { anno ->
+          def property = anno.getProperty()
+          OWLAnnotationValue val = anno.getValue()
+          if(val instanceof OWLLiteral) {
+            def literal = val.getLiteral()
+            if((property.isLabel() || property.toString() == "<http://www.w3.org/2004/02/skos/core#prefLabel>") && !labels.containsKey(iri)) {
+              labels[iri] = literal
+            }
           }
         }
       }
+    } catch(e) {
+      HandleError(e, verbose, "Error loading of processing the ontology file ($ontologyFile)")
     }
    
     // Set class props (reasoning also performed here)
