@@ -59,7 +59,7 @@ class App {
       _ longOpt: 'scores-only', 'Do not run StepDown algorithm. Useful if you only want to save scores.', type: Boolean
       _ longOpt: 'reclassify', 'Attempt to reclassify the input using the derived explanations. This will help give some scores about how well the explanations fit the data', type: Boolean
       _ longOpt: 'classify', 'Pass a new file of unseen examples to classify using the explanations derived (test classify)', args: 1
-      ecm longOpt: 'explainers-classify-mode', 'Only use the smaller set of explanatory variables for classification.', type: Boolean
+      ucm longOpt: 'univariate-classify-mode', 'Use the larger set of univariate results for classification tasks. Note: this is overriden when using --classify-with-variables.', type: Boolean
       _ longOpt: 'classify-with-variables', 'Instead of using Klarigi\'s results to (re)-classify with, use the terms specified in the given file. The file should be a two-column TSV. First column is a term ID, the second is the group association (group this variable should be used to explain).', args: 1
 
       p longOpt: 'perms', 'Do permutation testing to provide p values for inclusion, and exclusion.', args: 1
@@ -167,10 +167,10 @@ class App {
         println 'Skipping classification options because in EGL mode.'
       } else {
         if(o['reclassify']) {
-          k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], threads)
+          k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], threads)
         }
         if(o['classify']) {
-          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ecm'], o['classify-with-variables'], excludeClasses, threads)
+          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], excludeClasses, threads)
         }
       }
 

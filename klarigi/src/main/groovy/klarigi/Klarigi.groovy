@@ -349,11 +349,13 @@ public class Klarigi {
   }
 
   def explainClusters(groups, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
-    def toProcess = data.groupings.findAll { g, v -> groups.contains(g) }
+    def missing = groups.findAll { g -> !data.groupings.containsKey(g) }
+    if(missing.size() != 0) { RaiseError("Groups not found in dataset: " + missing.join(', ')) }
+
     def results = []
 
     GParsPool.withPool(threads) { p ->
-      toProcess.eachParallel { g, v ->
+      groups.collect { g -> data.groupings[g] }.eachParallel { g, v ->
         results << [ cluster: g, results: explainCluster(g, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
       }
     }
@@ -365,9 +367,9 @@ public class Klarigi {
     explainClusters(data.groupings.keySet().toList(), scoreOnly, outputScores, outputType, threads, debug, includeAll)
   }
 
-  def reclassify(allExplanations, excludeClasses, outClassScores, ecm, cwf, threads) {
+  def reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf, threads) {
     if(cwf) { 
-      ecm = false
+      ucm = false
 
       def assoc = [:]
       new File(cwf).splitEachLine('\t') {
@@ -382,7 +384,7 @@ public class Klarigi {
       }
     }
 
-    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, ecm)
+    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, ucm)
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
@@ -396,10 +398,10 @@ public class Klarigi {
     }
   }
 
-  def classify(path, allExplanations, outClassScores, ecm, cwf, excludeClasses, threads) {
+  def classify(path, allExplanations, outClassScores, ucm, cwf, excludeClasses, threads) {
     loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
 
-    def m = Classifier.classify(allExplanations, data, ontoHelper, ecm)
+    def m = Classifier.classify(allExplanations, data, ontoHelper, ucm)
     if(!m) {
       RaiseError("Failed to build classifier. There may have been too few examples.")
     }
