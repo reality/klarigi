@@ -75,6 +75,7 @@ class App {
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
 
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
+      _ longOpt: 'show-warnings', 'Output warnings.', type: Boolean, args: 0
     }
 
     if(args.size() == 0 || (args.size() > 0 && (args[0] == '-h' || args[0] == '--help'))) {

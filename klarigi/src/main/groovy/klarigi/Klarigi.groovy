@@ -48,7 +48,7 @@ public class Klarigi {
 
     loadData(o['data'], o['pp'], o['group'], o['egl'])
     loadOntology(o['ontology'])
-    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'])
+    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'], o['show-warnings'])
 
     coefficients = Coefficients.Generate(o)
     if(o['egl']) { coefficients['min-exclusion'] = 0 }
@@ -161,7 +161,7 @@ public class Klarigi {
     return newSample
   }
 
-  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle, pp) {
+  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle, pp, showWarnings) {
     if(icFile) {
       try {
       new File(icFile).splitEachLine('\t') {
@@ -175,7 +175,7 @@ public class Klarigi {
         icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle, pp)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
-        data.ic = icFactory.getInformationContent(allClasses)
+        data.ic = icFactory.getInformationContent(allClasses, showWarnings)
       } catch(e) {
         HandleError(e, verbose, "Error calculating information content values")
       }

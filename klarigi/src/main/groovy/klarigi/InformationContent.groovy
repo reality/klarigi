@@ -97,13 +97,17 @@ public class InformationContent {
     engine = new SM_Engine(graph)
   }
 
-  def getInformationContent(cList) {
+  def getInformationContent(cList, showWarnings) {
     def res = [:]
     cList.each { c ->
       try {
         def cTerm = factory.getURI(c)
         res[c] = engine.getIC(icConf, cTerm)
-      } catch(e) { println 'Warning: ' + e.getMessage() }
+      } catch(e) { 
+        if(showWarnings) {
+          println 'Warning: ' + e.getMessage() 
+        }
+      }
     }
     res
   }
