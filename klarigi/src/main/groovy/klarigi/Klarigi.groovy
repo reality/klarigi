@@ -378,7 +378,7 @@ public class Klarigi {
       def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, false, threads)
 
        allExplanations.each { exps ->
-         exps.results[2] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)
+         exps.results[0] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)
       }
     }
 
