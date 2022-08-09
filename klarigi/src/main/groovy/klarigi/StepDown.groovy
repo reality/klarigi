@@ -149,9 +149,9 @@ public class StepDown {
     }
     out << "\\hline"
     if(egl) {
-      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - \\\\ "
+      out << "{\\em Overall} & - & {\\em ${res[1].toDouble().round(2)} } & - \\\\ "
     } else {
-      out << "{\\em Overall} & ${res[1].toDouble().round(2)} & - & - \\\\ "
+      out << "{\\em Overall} & - & {\\em ${res[1].toDouble().round(2)} } & - & - \\\\ "
     }
     out << "\\end{tabular}"
     out = out.join('\n')
