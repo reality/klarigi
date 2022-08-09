@@ -13,7 +13,7 @@ public class Coefficients {
     MIN_INCLUSION: 0,
     MIN_EXCLUSION: 0.05,
     MIN_IC: 0.4,
-    MIN_POWER: 0.1,
+    MIN_R_SCORE: 0.1,
 
     STEP: 0.05,
   ]

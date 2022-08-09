@@ -179,7 +179,7 @@ public class Scorer {
         if(!returnAll) {
           if(data.groupings.size() > 1) {
             return v.nIc >= c.MIN_IC && 
-              v.nPower >= c.MIN_POWER && 
+              v.nPower >= c.MIN_R_SCORE && 
               v.nExclusion >= c.MIN_EXCLUSION && 
               v.nInclusion >= c.MIN_INCLUSION
           } else {
@@ -252,7 +252,7 @@ public class Scorer {
   }
 
   static def Write(cid, s, labels, fName) {
-    new File(fName).text = "iri\tallinclusion\tfullexclusion\tinclusivity\texclusivity\tpower\tspecificity\n" + s.collect {
+    new File(fName).text = "iri\tallinclusion\tfullexclusion\tinclusivity\texclusivity\tr-score\tic\n" + s.collect {
       "${it.iri}\t${it.allInclusion}\t${it.fExclusion}\t${it.nInclusion}\t${it.nExclusion}\t${it.nPower}\t${it.nIc}"
     }.join('\n')
   }
@@ -261,7 +261,7 @@ public class Scorer {
     def out = []
 
     out << "\\begin{tabular}"
-    out << "{\\bf Class} & {\\bf Power} & {\\bf Inclusivity} & & {\\bf Exclusivity} & {\\bf Specificity} \\\\"
+    out << "{\\bf Class} & {\\bf r-score} & {\\bf Inclusion} & & {\\bf Exclusion} & {\\bf IC} \\\\"
     out << "\\hline \\hline"
 
     res.sort { -it.nPower }.each {
