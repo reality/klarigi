@@ -354,10 +354,8 @@ public class Klarigi {
 
     def results = []
 
-    GParsPool.withPool(threads) { p ->
-      groups.collect { g -> data.groupings[g] }.eachParallel { g, v ->
-        results << [ cluster: g, results: explainCluster(g, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
-      }
+    groups.each { g ->
+      results << [ cluster: g, results: explainCluster(g, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
     }
 
     return results
