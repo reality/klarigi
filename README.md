@@ -1,8 +1,8 @@
 # Klarigi
 
-This application will give you explanations for clusters or groupings 
+This application will derive characteristic and discriminatory explanations for groups 
 of entities described by ontology classes. For example, groups of
-patient profiles described by HPO classes. 
+patients described by HPO classes. 
 
 ## Installation
 
