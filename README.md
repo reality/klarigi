@@ -12,5 +12,6 @@ This [tutorial](https://colab.research.google.com/drive/18BxV-mOItKpOu_rtrb1_WSn
 
 * Papers:
   * [Klarigi: Characteristic Explanations for Semantic Data](https://www.biorxiv.org/content/10.1101/2021.06.14.448423v2)
+    * This paper described the algorithms and thinking in-depth, with much discussion and application to two use cases.
   * [Multi-faceted Semantic Clustering With Text-derived Phenotypes](https://www.medrxiv.org/content/10.1101/2021.05.26.21257830v1)
-    * This describes some of the very early thuoghts behind the algorithm
+    * This describes some of the very early thoughts behind the algorithm, but doesn't represent the current state.
