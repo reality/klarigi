@@ -2,16 +2,17 @@ package klarigi
 
 import org.semanticweb.owlapi.model.IRI 
 import be.cylab.java.roc.*
+import java.util.concurrent.*
+import groovyx.gpars.*
+import groovyx.gpars.GParsPool
 
 public class Classifier {
   static def classify(c, allExplanations, data, ontoHelper, threads, ucm) {
-    def subclassCache = [:]
-
-    def metrics = [:]
+    def metrics = new ConcurrentHashMap()
     data.groupings.each { cid, entities ->
       metrics[cid] = [
-        truths: [],
-        scores: []
+        truths: new ConcurrentHashMap(),
+        scores: new ConcurrentHashMap()
       ]
     }
 
@@ -26,7 +27,8 @@ public class Classifier {
     }
 
     //iterate each entity
-    data.associations.each { entity, codes ->
+    GParsPool.withPool(threads) { p ->
+    data.associations.eachParallel { entity, codes ->
       // Iterate each group
       def scores = [:]
       
@@ -34,18 +36,10 @@ public class Classifier {
         scores[exps.cluster] = 1
 
         def rs = sterms[exps.cluster].collect { e ->
-          // Get subclasses + equivalent of this explanatory class
-          if(!subclassCache.containsKey(e.iri)) {
-            def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(e.iri))
-            subclassCache[e.iri] = ontoHelper.reasoner.getSubClasses(ce, false).collect { n -> n.getEntities().collect { it.getIRI().toString() } }.flatten() 
-          }
-          def subeq = subclassCache[e.iri] + e.iri
-
           def score = 0
-          if(subeq.any { codes.containsKey(it) }) {
+          if(e.incEnts.containsKey(entity)) {
             score = e.nExclusion
           }
-            
           return score
         }
 
@@ -59,9 +53,15 @@ public class Classifier {
         if(data.groupings[d].contains(entity)) {
           t = 1
         }
-        metrics[d].scores << v
-        metrics[d].truths << t
+        metrics[d].scores[entity] = v
+        metrics[d].truths[entity] = t
       }
+    }
+    }
+
+    metrics.each { d, v ->
+      v.scores = v.scores.collect { it.getValue() }
+      v.truths = v.truths.collect { it.getValue() }
     }
 
     return metrics

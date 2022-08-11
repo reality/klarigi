@@ -46,8 +46,8 @@ public class Klarigi {
   Klarigi(o, excludeClasses, threads) {
     verbose = o['verbose']
 
-    loadData(o['data'], o['pp'], o['group'], o['egl'], threads)
     loadOntology(o['ontology'])
+    loadData(o['data'], o['pp'], o['group'], o['egl'], threads)
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'], o['show-warnings'])
 
     coefficients = Coefficients.Generate(o)

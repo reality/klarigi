@@ -54,12 +54,11 @@ public class StepDown {
     if(!total) {
       candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
     }
-
     
     def covered = new AtomicInteger(0)
-    GParsPool.withPool { p ->
+    GParsPool.withPool(threads) { p ->
       data.groupings[cid].eachParallel { ee ->
-        if(contributingEf.any { data.associations[ee].containsKey(it.iri) }) {
+        if(contributingEf.any { it.incEnts.containsKey(ee) }) {
           covered.getAndIncrement()
         }
       } 

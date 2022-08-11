@@ -10,9 +10,10 @@ public class Scorer {
   private def data
   private def c 
   private def sc
-  private def preScore
   private def excludeClasses
   private def egl
+
+  public  def preScore
 
   Scorer(ontoHelper, coefficients, data, excludeClasses, egl, threads) {
     this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
@@ -128,6 +129,8 @@ public class Scorer {
 
       // Normalised inclusion score (proportion of entities in the group annotated with the term)
       nInclusion: this.preScore[c][cid].inc / data.groupings[cid].size(),
+
+      incEnts: this.preScore[c][cid].incEnts,
 
       // fExclusion is unweighted exclusion score, nExclusion is the final score
       fExclusion: 0,
