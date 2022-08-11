@@ -46,7 +46,7 @@ public class Klarigi {
   Klarigi(o, excludeClasses, threads) {
     verbose = o['verbose']
 
-    loadData(o['data'], o['pp'], o['group'], o['egl'])
+    loadData(o['data'], o['pp'], o['group'], o['egl'], threads)
     loadOntology(o['ontology'])
     loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'], o['show-warnings'])
 
@@ -60,12 +60,12 @@ public class Klarigi {
     }
   }
 
-  def loadData(dataFile, pp, interestGroup, egl) {
+  def loadData(dataFile, pp, interestGroups, egl, threads) {
     data = [
-      groupings: [:],
-      associations: [:],
-      egroups: [:],
-      ic: [:]
+      groupings: new ConcurrentHashMap(),
+      associations: new ConcurrentHashMap(),
+      egroups: new ConcurrentHashMap(),
+      ic: new ConcurrentHashMap()
     ]
     try {
       def inputFile = new File(dataFile)
@@ -104,14 +104,22 @@ public class Klarigi {
         }
       }
 
-      input.each {
+      GParsPool.withPool(threads) { p ->
+      input.eachParallel {
         def (entity, terms, group) = it
 
         if(group) {
           def gs = group.tokenize(';')
           if(egl) {
-            gs = gs.findAll { g -> g == interestGroup }
-            // Here we exit if there are no interestGroup associations for this entity. We don't do this in the regular mode, because even ungrouped entities provide useful background...
+            gs = gs.findAll { g -> interestGroups.contains(g) }
+          }
+
+          if(interestGroups) {
+            def anyFalse = false 
+            gs = gs.collect { interestGroups.contains(it) ? it : 'false' }
+            anyFalse = gs.contains('false')
+            gs = gs.findAll { it != 'false' }
+            if(anyFalse) { gs << 'false' } // hey, it's cheaper than uniq
           }
 
           // egroups is a map of each entity to the groups it's associates with
@@ -119,9 +127,9 @@ public class Klarigi {
 
           gs.each { g ->
             if(!data.groupings.containsKey(g)) {
-              data.groupings[g] = []
+              data.groupings[g] = new ConcurrentHashMap()
             }
-            data.groupings[g] << entity
+            data.groupings[g][entity] = true
           }
         }
 
@@ -140,14 +148,24 @@ public class Klarigi {
           }
         }
       }
+      }
     } catch(e) {
       HandleError(e, verbose, "Error loading data file ($dataFile)")
     }
 
+    // replace it with the original lists, i'll fix this once i can be bothered to rewrite the client code
+    def newGroups = [:]
+    data.groupings.each { k, v ->
+      newGroups[k] = v.keySet().toList()
+    }
+    data.groupings = newGroups
+
     // kind of stupid but ok 
-    data.allAssociations = data.associations.collect { entity, terms ->
-      terms.keySet().toList()
-    }.flatten().unique(false)
+    def qa = [:]
+    data.associations.each { entity, terms ->
+      terms.keySet().toList().each { qa[it] = true }
+    }
+    data.allAssociations = qa.keySet().toList()
 
     if(verbose) {
       println "Done loading dataset"
