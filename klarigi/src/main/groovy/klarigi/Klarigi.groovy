@@ -365,7 +365,7 @@ public class Klarigi {
 
     def res
     if(!scoreOnly) {
-      res = StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, debug)
+      res = StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, threads, debug)
     } 
 
     return res
@@ -405,7 +405,7 @@ public class Klarigi {
       }
     }
 
-    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, ucm)
+    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, threads, ucm)
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
@@ -422,7 +422,7 @@ public class Klarigi {
   def classify(path, allExplanations, outClassScores, ucm, cwf, excludeClasses, threads) {
     loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
 
-    def m = Classifier.classify(allExplanations, data, ontoHelper, ucm)
+    def m = Classifier.classify(allExplanations, data, ontoHelper, threads, ucm)
     if(!m) {
       RaiseError("Failed to build classifier. There may have been too few examples.")
     }

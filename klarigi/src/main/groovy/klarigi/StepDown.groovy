@@ -1,20 +1,24 @@
 package klarigi
 
+import java.util.concurrent.atomic.*
+import groovyx.gpars.*
+import groovyx.gpars.GParsPool
 
 public class StepDown {
   static def Run(c, cid, candidates, data, egl, debug) {
     RunNewAlgorithm(c, cid, candidates, data, debug)
   }
 
-  static def RunNewAlgorithm(c, cid, candidates, data, debug) {
+  static def RunNewAlgorithm(c, cid, candidates, data, threads, debug) {
     def totalCoverage = 0
     def stepDown = { e, icCutoff, powerCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
+
         def ef = candidates.findAll {
           it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
 
-        totalCoverage = CalculateOI(c, cid, data, ef, false)
+        totalCoverage = CalculateOI(c, cid, data, ef, threads, false)
 
         if(debug) {
           println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
@@ -35,7 +39,7 @@ public class StepDown {
             powerCutoff -= c.STEP
           }
         } else { // this is very dirty, but i quickly hacked this from a recursive function. TODO exit the loop properly
-          return [ef, CalculateOI(c, cid, data, ef, true), candidates]
+          return [ef, CalculateOI(c, cid, data, ef, threads, true), candidates]
         } 
       }
       return [ef, 0, candidates] // fail case
@@ -45,14 +49,22 @@ public class StepDown {
   }
 
   // We don't use the associations in data.associations, in case we want to use a different
-  static def CalculateOI(c, cid, data, candidates, total) {
+  static def CalculateOI(c, cid, data, candidates, threads, total) {
     def contributingEf = candidates
     if(!total) {
       candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
     }
-    def covered = data.groupings[cid].findAll { ee ->
-      contributingEf.any { data.associations[ee].containsKey(it.iri) }
-    }.size()
+
+    
+    def covered = new AtomicInteger(0)
+    GParsPool.withPool { p ->
+      data.groupings[cid].eachParallel { ee ->
+        if(contributingEf.any { data.associations[ee].containsKey(it.iri) }) {
+          covered.getAndIncrement()
+        }
+      } 
+    }
+
     return (covered / data.groupings[cid].size()) * 100;
   }
 

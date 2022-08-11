@@ -4,7 +4,7 @@ import org.semanticweb.owlapi.model.IRI
 import be.cylab.java.roc.*
 
 public class Classifier {
-  static def classify(c, allExplanations, data, ontoHelper, ucm) {
+  static def classify(c, allExplanations, data, ontoHelper, threads, ucm) {
     def subclassCache = [:]
 
     def metrics = [:]
@@ -21,7 +21,7 @@ public class Classifier {
       sterms[exps.cluster] = exps.results[0]
       if(ucm) { sterms[exps.cluster] = exps.results[2] }
 
-      def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], true) //.collect { it.iri })
+      def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], threads, true) //.collect { it.iri })
       println "Classifying '${exps.cluster}' using candidate set with OI: $totalCoverage"
     }
 
