@@ -27,8 +27,8 @@ public class Classifier {
     }
 
     //iterate each entity
-    GParsPool.withPool(threads) { p ->
-    data.associations.eachParallel { entity, codes ->
+    //GParsPool.withPool(threads) { p ->
+    data.associations.each { entity, codes ->
       // Iterate each group
       def scores = [:]
       
@@ -56,7 +56,6 @@ public class Classifier {
         metrics[d].scores[entity] = v
         metrics[d].truths[entity] = t
       }
-    }
     }
 
     metrics.each { d, v ->

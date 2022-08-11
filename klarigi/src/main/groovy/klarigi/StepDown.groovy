@@ -55,14 +55,14 @@ public class StepDown {
       candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
     }
     
-    def covered = new AtomicInteger(0)
-    GParsPool.withPool(threads) { p ->
-      data.groupings[cid].eachParallel { ee ->
+    def covered = 0 // new AtomicInteger(0)
+    //GParsPool.withPool(threads) { p ->
+      data.groupings[cid].each { ee ->
         if(contributingEf.any { it.incEnts.containsKey(ee) }) {
-          covered.getAndIncrement()
+          covered++ //.getAndIncrement()
         }
       } 
-    }
+    //}
 
     return (covered / data.groupings[cid].size()) * 100;
   }

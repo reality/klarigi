@@ -141,7 +141,7 @@ public class Klarigi {
             }
           }
           if(!data.associations.containsKey(entity)) {
-            data.associations[entity] = [:]
+            data.associations[entity] = new ConcurrentHashMap()
           }
           terms.each {
             data.associations[entity][it] = true
