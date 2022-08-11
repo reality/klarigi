@@ -97,42 +97,47 @@ public class Klarigi {
           PacketConverter.Save(input, outName) 
         }
       } else {
-        input = new File(dataFile).collect { it.split('\t') }
+        input = new File(dataFile).collect { 
+          it = it.tokenize('\t') 
+          if(it.size() == 2) { it << '' }
+          it
+        }
       }
 
       input.each {
         def (entity, terms, group) = it
 
-        def gs = group.tokenize(';')
-        if(egl) {
-          gs = gs.findAll { g -> g == interestGroup }
-          // Here we exit if there are no interestGroup associations for this entity. We don't do this in the regular mode, because even ungrouped entities provide useful background...
-          if(gs.size() == 0) {
-            return;
+        if(group) {
+          def gs = group.tokenize(';')
+          if(egl) {
+            gs = gs.findAll { g -> g == interestGroup }
+            // Here we exit if there are no interestGroup associations for this entity. We don't do this in the regular mode, because even ungrouped entities provide useful background...
+          }
+
+          // egroups is a map of each entity to the groups it's associates with
+          data.egroups[entity] = gs
+
+          gs.each { g ->
+            if(!data.groupings.containsKey(g)) {
+              data.groupings[g] = []
+            }
+            data.groupings[g] << entity
           }
         }
 
-        // egroups is a map of each entity to the groups it's associates with
-        data.egroups[entity] = gs
-
-        gs.each { g ->
-          if(!data.groupings.containsKey(g)) {
-            data.groupings[g] = []
+        if(terms) {
+          terms = terms.tokenize(';')
+          if(terms.size() > 0 && terms[0] =~ /:/ && terms[0].indexOf('http') == -1) { // stupid
+            terms = terms.collect { 
+              'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+            }
           }
-          data.groupings[g] << entity
-        }
-
-        terms = terms.tokenize(';')
-        if(terms.size() > 0 && terms[0] =~ /:/ && terms[0].indexOf('http') == -1) { // stupid
-          terms = terms.collect { 
-            'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+          if(!data.associations.containsKey(entity)) {
+            data.associations[entity] = [:]
           }
-        }
-        if(!data.associations.containsKey(entity)) {
-          data.associations[entity] = [:]
-        }
-        terms.each {
-          data.associations[entity][it] = true
+          terms.each {
+            data.associations[entity][it] = true
+          }
         }
       }
     } catch(e) {
