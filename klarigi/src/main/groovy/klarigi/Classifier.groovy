@@ -23,7 +23,7 @@ public class Classifier {
       if(ucm) { sterms[exps.cluster] = exps.results[2] }
 
       def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], threads, true) //.collect { it.iri })
-      println "Classifying '${exps.cluster}' using candidate set with OI: $totalCoverage"
+      println "Classifying ${data.groupings[exps.cluster].size()} records in '${exps.cluster}' using ${sterms[exps.cluster].size()} terms using candidate set with OI: $totalCoverage"
     }
 
     //iterate each entity
