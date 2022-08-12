@@ -6,7 +6,7 @@ patients described by HPO classes. For more information, please read the [prepri
 
 ## Installation
 
-Here is the most recent [stable release](https://github.com/reality/klarigi/releases/tag/0.1.0). To install, you just have to extract either the ZIP or Tar file, then either run the ```klarigi``` binary from the extracted folder directly, or add it to your PATH (see the later linked tutorial for an example).
+Here is the most recent [stable release](https://github.com/reality/klarigi/releases/tag/0.1.1). To install, you just have to extract either the ZIP or Tar file, then either run the ```klarigi``` binary from the extracted folder directly, or add it to your PATH (see the later linked tutorial for an example).
 
 ## Guide
 

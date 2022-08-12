@@ -33,7 +33,7 @@ public class Classifier {
       def scores = [:]
       
       allExplanations.each { exps ->
-        scores[exps.cluster] = 1
+        scores[exps.cluster] = new Float(1.0)
 
         def rs = sterms[exps.cluster].collect { e ->
           def score = 0
