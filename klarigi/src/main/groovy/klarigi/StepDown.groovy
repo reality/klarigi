@@ -52,7 +52,7 @@ public class StepDown {
   static def CalculateOI(c, cid, data, candidates, threads, total) {
     def contributingEf = candidates
     if(!total) {
-      candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
+      candidates = candidates.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
     }
     
     def covered = 0 // new AtomicInteger(0)
