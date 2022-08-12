@@ -61,12 +61,10 @@ public class Klarigi {
   }
 
   def loadData(dataFile, pp, interestGroups, egl, threads) {
-    data = [
-      groupings: new ConcurrentHashMap(),
-      associations: new ConcurrentHashMap(),
-      egroups: new ConcurrentHashMap(),
-      ic: new ConcurrentHashMap()
-    ]
+    def groupings = new ConcurrentHashMap();
+    def associations = new ConcurrentHashMap();
+    def egroups = new ConcurrentHashMap();
+    def ic = new ConcurrentHashMap()
     try {
       def inputFile = new File(dataFile)
       if(!inputFile.exists()) { RaiseError("Data file not found. Check --data argument.") }
@@ -123,14 +121,7 @@ public class Klarigi {
           }
 
           // egroups is a map of each entity to the groups it's associates with
-          data.egroups[entity] = gs
-
-          gs.each { g ->
-            if(!data.groupings.containsKey(g)) {
-              data.groupings[g] = new ConcurrentHashMap()
-            }
-            data.groupings[g][entity] = true
-          }
+          egroups[entity] = gs
         }
 
         if(terms) {
@@ -140,11 +131,11 @@ public class Klarigi {
               'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
             }
           }
-          if(!data.associations.containsKey(entity)) {
-            data.associations[entity] = new ConcurrentHashMap()
+          if(!associations.containsKey(entity)) {
+            associations[entity] = new ConcurrentHashMap()
           }
           terms.each {
-            data.associations[entity][it] = true
+            associations[entity][it] = true
           }
         }
       }
@@ -153,19 +144,35 @@ public class Klarigi {
       HandleError(e, verbose, "Error loading data file ($dataFile)")
     }
 
-    // replace it with the original lists, i'll fix this once i can be bothered to rewrite the client code
-    def newGroups = [:]
-    data.groupings.each { k, v ->
-      newGroups[k] = v.keySet().toList()
+    egroups.each { e, gs ->
+      gs.each { g ->
+        if(!groupings.containsKey(g)) {
+          groupings[g] = []
+        }
+        groupings[g] << e
+      }
     }
-    data.groupings = newGroups
+
+    /*groupings.each { k, v ->
+      println "$k: ${v.size()}" 
+    }*/
 
     // kind of stupid but ok 
     def qa = [:]
-    data.associations.each { entity, terms ->
+    associations.each { entity, terms ->
       terms.keySet().toList().each { qa[it] = true }
     }
-    data.allAssociations = qa.keySet().toList()
+    def allAssociations = qa.keySet().toList()
+
+    //println "all associ: ${allAssociations.size()}"
+
+    data = [
+      groupings: groupings,
+      associations: associations,
+      egroups: egroups,
+      ic: ic,
+      allAssociations: allAssociations
+    ]
 
     if(verbose) {
       println "Done loading dataset"
