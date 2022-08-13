@@ -153,9 +153,10 @@ public class Klarigi {
       }
     }
 
-    /*groupings.each { k, v ->
-      println "$k: ${v.size()}" 
-    }*/
+    println "Groupings loaded:"
+    groupings.each { k, v ->
+      println "  $k: ${v.size()} members" 
+    }
 
     // kind of stupid but ok 
     def qa = [:]
@@ -164,7 +165,9 @@ public class Klarigi {
     }
     def allAssociations = qa.keySet().toList()
 
-    //println "all associ: ${allAssociations.size()}"
+    if(verbose) {
+      println "Loaded ${allAssociations.size()} entity-term associations."
+    }
 
     data = [
       groupings: groupings,
@@ -400,15 +403,22 @@ public class Klarigi {
       ucm = false
 
       def assoc = [:]
+      def allAssoc = []
       new File(cwf).splitEachLine('\t') {
         if(!assoc.containsKey(it[1])) { assoc[it[1]] = [] }
-        assoc[it[1]] << 'http://purl.obolibrary.org/obo/' + it[0].replace(':','_')
+        def t = 'http://purl.obolibrary.org/obo/' + it[0].replace(':','_')
+        assoc[it[1]] << t
+        allAssoc << t 
       }
 
+      // We rescore to ensure we have the scores for all of our given classes, and to get the new incEnts if we've reloaded data (per classify)
       def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, false, threads)
-
-       allExplanations.each { exps ->
+      def newScores = []
+      allExplanations.each { exps ->
          exps.results[0] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)
+         exps.results[0].each { t ->
+          t.nExclusion = exps.results[2].find { it.iri == t.iri }.nExclusion
+         }
       }
     }
 
@@ -417,7 +427,7 @@ public class Klarigi {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
 
-    println 'Reclassification:'
+    println 'Classification performance:'
     Classifier.Print(m)
     println ''
 
@@ -426,21 +436,17 @@ public class Klarigi {
     }
   }
 
-  def classify(path, allExplanations, outClassScores, ucm, cwf, excludeClasses, threads) {
-    loadData(path) // TODO I know, i know, this is awful state management and design. i'll fix it later
-
-    def m = Classifier.classify(allExplanations, data, ontoHelper, threads, ucm)
-    if(!m) {
-      RaiseError("Failed to build classifier. There may have been too few examples.")
+  def classify(path, allExplanations, outClassScores, ucm, cwf, excludeClasses, threads, o) {
+    if(o['verbose']) {
+      println "Loading new dataset at $path in order to classify ..."
     }
 
-    println 'Classification:'
-    Classifier.Print(m)
-    println ''
+    def saveIc = data.ic
+    loadData(path, o['pp'], o['group'], o['egl'], threads)
+    data.ic = saveIc 
+    // holding onto ic saves us a bit of time, but this should be looked at again if decide to involve IC in classify scoring.
 
-    if(outClassScores) {
-      Classifier.WriteScores(m, "classify")
-    }
+    reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf, threads)
   }
 
   def genSim(toFile, group) {

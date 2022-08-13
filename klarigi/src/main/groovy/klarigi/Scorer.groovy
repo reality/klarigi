@@ -61,13 +61,6 @@ public class Scorer {
     }
 
     toProcess = toProcess.unique(false)
-    /*if(manToProcess) {
-      toProcess = manToProcess
-    }*/
-
-    //toProcess = toProcess.findAll { c -> data.ic[c] >= this.c.MIN_IC } 
-
-    //println "Processing ${toProcess.size()}"
 
     toProcess.each { iri ->
       ass[iri] = [:]
@@ -85,7 +78,6 @@ public class Scorer {
     def i = 0
     GParsPool.withPool(threads) { p ->
     data.associations.eachParallel { e, terms ->
-      //println "${++i}"
       terms.each { t, v ->
         scMap[t].each { dt ->
           data.egroups[e].each { g ->
@@ -99,7 +91,6 @@ public class Scorer {
     def z = 0
     GParsPool.withPool(threads) { p ->
     data.groupings.eachParallel { cid, v ->
-      //println "${++z}"
       toProcess.each { iri ->
         ass[iri][cid].inc = ass[iri][cid].incEnts.size()
         ass[iri][cid].exc = data.groupings[cid].size() - ass[iri][cid].inc

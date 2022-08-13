@@ -29,10 +29,11 @@ public class Classifier {
     //iterate each entity
     //GParsPool.withPool(threads) { p ->
     data.associations.each { entity, codes ->
-      // Iterate each group
       def scores = [:]
       
+      // Iterate each group
       allExplanations.each { exps ->
+        // Start from 1
         scores[exps.cluster] = new Float(1.0)
 
         def rs = sterms[exps.cluster].collect { e ->

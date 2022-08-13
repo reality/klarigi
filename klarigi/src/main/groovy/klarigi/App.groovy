@@ -122,6 +122,12 @@ class App {
       }
     }
 
+    def includeAll = o['include-all']
+    // Otherwise, variables we use to classify may not be scored (and we need their old nExclusion values). Strictly it should probably be on CWV rather than c and re?
+    if(o['classify']) {
+      includeAll = true
+    }
+
     def k = new Klarigi(o, excludeClasses, threads)
     if(!o['similarity-mode']) {
       def allExplanations 
@@ -134,11 +140,11 @@ class App {
           System.exit(1)
         }
 
-        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], includeAll)
       } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], includeAll)
       } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], threads, o['debug'], o['include-all'])
+        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], threads, o['debug'], includeAll)
       }
 
       if(o['scores-only']) {
@@ -170,7 +176,7 @@ class App {
           k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], threads)
         }
         if(o['classify']) {
-          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], excludeClasses, threads)
+          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], excludeClasses, threads, o) // fuck it just passing o
         }
       }
 
