@@ -412,6 +412,7 @@ public class Klarigi {
       }
 
       // We rescore to ensure we have the scores for all of our given classes, and to get the new incEnts if we've reloaded data (per classify)
+      // TODO this needs to be done even if no CWF on --classify
       def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, false, threads)
       def newScores = []
       allExplanations.each { exps ->

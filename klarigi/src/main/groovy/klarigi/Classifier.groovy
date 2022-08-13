@@ -23,12 +23,12 @@ public class Classifier {
       if(ucm) { sterms[exps.cluster] = exps.results[2] }
 
       def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], threads, true) //.collect { it.iri })
-      println "Classifying ${data.groupings[exps.cluster].size()} records in '${exps.cluster}' using ${sterms[exps.cluster].size()} terms using candidate set with OI: $totalCoverage"
+      println "Building classifier for '${exps.cluster}. ${data.associations.size()} total records (${data.groupings[exps.cluster].size()} labelled ${exps.cluster}. Using ${sterms[exps.cluster].size()} terms with OI: $totalCoverage"
     }
 
     //iterate each entity
-    //GParsPool.withPool(threads) { p ->
-    data.associations.each { entity, codes ->
+    GParsPool.withPool(threads) { p ->
+    data.associations.eachParallel { entity, codes ->
       def scores = [:]
       
       // Iterate each group
@@ -36,15 +36,9 @@ public class Classifier {
         // Start from 1
         scores[exps.cluster] = new Float(1.0)
 
-        def rs = sterms[exps.cluster].collect { e ->
-          def score = 0
-          if(e.incEnts.containsKey(entity)) {
-            score = e.nExclusion
-          }
-          return score
-        }
-
-        rs.each {
+        sterms[exps.cluster].collect { e -> 
+          e.incEnts.containsKey(entity) ? e.nExclusion : 0 
+        }.each {
           scores[exps.cluster] = scores[exps.cluster] * (1+it)
         }
       }
@@ -57,6 +51,7 @@ public class Classifier {
         metrics[d].scores[entity] = v
         metrics[d].truths[entity] = t
       }
+    }
     }
 
     metrics.each { d, v ->
