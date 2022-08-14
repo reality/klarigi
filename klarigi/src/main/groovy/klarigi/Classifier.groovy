@@ -45,7 +45,7 @@ public class Classifier {
 
       scores.each { d, v ->
         def t = 0
-        if(data.groupings[d].contains(entity)) {
+        if(data.egroups[entity].contains(d)) {
           t = 1
         }
         metrics[d].scores[entity] = v
