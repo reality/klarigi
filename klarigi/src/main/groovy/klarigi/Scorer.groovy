@@ -11,33 +11,33 @@ public class Scorer {
   private def c 
   private def sc
   private def excludeClasses
-  private def egl
+  private def o
 
   public  def preScore
 
-  Scorer(ontoHelper, coefficients, data, excludeClasses, egl, threads) {
-    this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
-    this.precalculateScores(threads)
+  Scorer(ontoHelper, coefficients, data, o) {
+    this.setup(ontoHelper, coefficients, data, o)
+    this.precalculateScores()
   }
 
-  Scorer(ontoHelper, coefficients, data, excludeClasses, egl, threads, manToProcess) {
-    this.setup(ontoHelper, coefficients, data, excludeClasses, egl, threads)
-    this.precalculateScores(threads, manToProcess)
+  Scorer(ontoHelper, coefficients, data, o, manToProcess) {
+    this.setup(ontoHelper, coefficients, data, o)
+    this.precalculateScores(manToProcess)
   }
 
-  private def setup(ontoHelper, coefficients, data, excludeClasses, egl, threads) {
+  private def setup(ontoHelper, coefficients, data, o) {
     this.ontoHelper = ontoHelper
     this.data = data
     this.c = coefficients
-    this.excludeClasses = extendExcludeClasses(excludeClasses)
-    this.egl = egl
+    this.excludeClasses = extendExcludeClasses(o['exclude-classes'])
+    this.o = o
   }
 
-  private def precalculateScores(threads) {
-    precalculateScores(threads, false)
+  private def precalculateScores() {
+    precalculateScores(false)
   }
 
-  private def precalculateScores(threads, manToProcess) {
+  private def precalculateScores(manToProcess) {
     def ass = new ConcurrentHashMap()
 
     // TODO add excludeclasses here
@@ -76,7 +76,7 @@ public class Scorer {
 
     // so we only want one +1 per person per thing
     def i = 0
-    GParsPool.withPool(threads) { p ->
+    GParsPool.withPool(o['threads']) { p ->
     data.associations.eachParallel { e, terms ->
       terms.each { t, v ->
         scMap[t].each { dt ->
@@ -89,7 +89,7 @@ public class Scorer {
     }
 
     def z = 0
-    GParsPool.withPool(threads) { p ->
+    GParsPool.withPool(o['threads']) { p ->
     data.groupings.eachParallel { cid, v ->
       toProcess.each { iri ->
         ass[iri][cid].inc = ass[iri][cid].incEnts.size()
@@ -167,7 +167,7 @@ public class Scorer {
   private def normalise(explainers, cid, returnAll) {
     explainers.findAll { k, v -> v.nIc }
       .collect{ k, v -> 
-        if(egl) { v.nPower = v.nInclusion }
+        if(o['egl']) { v.nPower = v.nInclusion }
         v 
       }.findAll { v ->
         if(!returnAll) {
@@ -200,13 +200,13 @@ public class Scorer {
     return relevant
   }
 
-  def scoreClasses(cid, threads, classes) {
-    scoreClasses(cid, threads, classes, false)
+  def scoreClasses(cid, classes) {
+    scoreClasses(cid, classes, false)
   }
 
-  def scoreClasses(cid, threads, classes, returnAll) {
+  def scoreClasses(cid, classes, returnAll) {
     def explainers = new ConcurrentHashMap()
-    GParsPool.withPool(threads) { p ->
+    GParsPool.withPool(o['threads']) { p ->
     classes.eachParallel {
       classes.each {
         processClass(explainers, cid, it)
@@ -219,11 +219,11 @@ public class Scorer {
     explainers
   }
 
-  def scoreAllClasses(cid, threads) {
-    scoreAllClasses(cid, threads, false)
+  def scoreAllClasses(cid) {
+    scoreAllClasses(cid, false)
   }
 
-  def scoreAllClasses(cid, threads, returnAll) {
+  def scoreAllClasses(cid, returnAll) {
     // TODO i think we can use the allclasses?
     // or perhaps we're only interested in classes in this cluster?
     def classMap = [:]
@@ -236,7 +236,7 @@ public class Scorer {
     }
 
     def explainers = new ConcurrentHashMap()
-    GParsPool.withPool(threads) { p ->
+    GParsPool.withPool(o['threads']) { p ->
       relevant.eachParallel {
         processClass(explainers, cid, it)
       }

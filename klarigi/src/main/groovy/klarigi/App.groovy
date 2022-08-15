@@ -9,6 +9,63 @@ import org.semanticweb.owlapi.util.*
 
 class App {
   static void main(String[] args) {
+    def o = App.BuildOptions(args) 
+
+    // Now we will run Klarigi 
+    def k = new Klarigi(o)
+
+    if(o['similarity-mode']) {
+      k.genSim()
+      System.exit(0)
+    }
+
+    // The business
+
+    def allExplanations = o['groups'] ? k.explainClusters(o['groups']) : k.explainAllClusters()
+
+    // We only wanted the scores, so now we exit
+    if(o['scores-only']) {
+      println "Done (scores-only)."
+      System.exit(0)
+    }
+
+    // Permutation testing
+    def pVals = [:]
+    if(o['perms']) {
+      if(o['egl']) { 
+        println 'Skipping permutation testing because in EGL mode.'
+      } else {
+        pVals = k.permutationTest(allExplanations)
+      }
+    }
+
+    allExplanations.each {
+      k.output(it.cluster, it.results, pVals[it.cluster])
+    }
+
+    // Optionally output a dataframe
+    if(o['output-exp-dataframe']) {
+      k.writeDataframe('train', allExplanations)
+    }
+      
+    // Reclassification and classification
+    if(o['egl']) { 
+      println 'Skipping classification options because in EGL mode.'
+    } else {
+      if(o['reclassify']) {
+        k.reclassify(allExplanations)
+      }
+      if(o['classify']) {
+        k.classify(allExplanations)
+
+        if(o['output-exp-dataframe']) {
+          k.writeDataframe('test', allExplanations)
+        }
+      }
+    }
+  }
+
+  static def BuildOptions(args) {
     def cliBuilder = new CliBuilder(
       usage: 'klarigi [<options>]',
       header: 'Options:'
@@ -62,20 +119,19 @@ class App {
       ucm longOpt: 'univariate-classify-mode', 'Use the larger set of univariate results for classification tasks. Note: this is overriden when using --classify-with-variables.', type: Boolean
       _ longOpt: 'classify-with-variables', 'Instead of using Klarigi\'s results to (re)-classify with, use the terms specified in the given file. The file should be a two-column TSV. First column is a term ID, the second is the group association (group this variable should be used to explain).', args: 1
 
-      p longOpt: 'perms', 'Do permutation testing to provide p values for inclusion, and exclusion.', args: 1
+      p longOpt: 'perms', 'Do permutation testing to provide p values for inclusion, and exclusion.', args: 1, type: Integer
 
       _ longOpt: 'output-scores', 'Output the results of the scorer. This can be useful for debugging, or identifying coefficient settings.', type: Boolean
       _ longOpt: 'output-type', 'Pass either "latex" or "tsv" to output as LaTeX table format or TSV format respectively.', args: 1
       _ longOpt: 'output-classification-scores', 'Output classification scores and true/false labels for each group into files. Useful for generating AUCs.', type: Boolean
       _ longOpt: 'output-exp-dataframe', "Output a TSV describing a 'data-frame' of categorical values for each term appearing in derived explanations. Easy to load into R and do stuff with.", type: Boolean
 
-      _ longOpt: 'threads', 'Number of threads to use, particularly for calculating scoring. This should speed things up a lot with larger datasets.', args: 1
+      _ longOpt: 'threads', 'Number of threads to use, particularly for calculating scoring. This should speed things up a lot with larger datasets.', type: Integer
 
       _ longOpt: 'output', 'File to output results to. If not given, will print to stdout', args: 1
       _ longOpt: 'print-members', 'Print members of groups by label (first column of data file). Only works with standard output (not LaTeX)', type: Boolean
 
       _ longOpt: 'verbose', 'Verbose output, mostly progress', type: Boolean, args: 0
-      _ longOpt: 'show-warnings', 'Output warnings.', type: Boolean, args: 0
     }
 
     if(args.size() == 0 || (args.size() > 0 && (args[0] == '-h' || args[0] == '--help'))) {
@@ -85,11 +141,15 @@ class App {
     
     SLF4JSilencer.silence();
 
-    def o = cliBuilder.parse(args)
-
-    if(!o || (o && o.h)) { 
+    def parsedOptions = cliBuilder.parse(args)
+    if(!parsedOptions || (parsedOptions && parsedOptions.h)) { 
       cliBuilder.usage(); 
       System.exit(0)
+    }
+
+    def o = parsedOptions.matchedOptions().collectEntries { a ->
+      a = a.names().last().replace('--', '')
+      [(a): parsedOptions[a]]
     }
 
     // For some reason, the required bit doesn't work above. Stupid.
@@ -103,88 +163,49 @@ class App {
     }
     if(missingOptions) { System.exit(1) }
 
-    def threads = 1
+    /*def threads = 1
     if(o['threads']) {
       try {
-        threads = Integer.parseInt(o['threads'])
+        o['threads'] = Integer.parseInt(o['threads'])
       } catch(e) {
         println 'Warning: Could not parse --threads argument. Defaulting to 1.'
-        threads = 1
+        o['threads'] = 1
       }
+    }*/
+    if(!o['threads']) {
+      o['threads'] = Runtime.getRuntime().availableProcessors() + 1
     }
-    def excludeClasses = []
+
     if(o['exclude-classes']) {
-      excludeClasses = o['exclude-classes'].tokenize(';')
-      if(excludeClasses.size() > 0 && excludeClasses[0] =~ /:/ && excludeClasses[0].indexOf('http') == -1) { // stupid
-          excludeClasses = excludeClasses.collect { 
+      o['exclude-classes'] = o['exclude-classes'].tokenize(';')
+      if(o['exclude-classes'].size() > 0 && o['exclude-classes'][0] =~ /:/ && o['exclude-classes'][0].indexOf('http') == -1) { // stupid
+          o['exclude-classes'] = o['exclude-classes'].collect { 
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
       }
     }
 
-    def includeAll = o['include-all']
     // Otherwise, variables we use to classify may not be scored (and we need their old nExclusion values). Strictly it should probably be on CWV rather than c and re?
     if(o['classify']) {
-      includeAll = true
-    }
+      o['include-all'] = true
+  }
 
-    def k = new Klarigi(o, excludeClasses, threads)
-    if(!o['similarity-mode']) {
-      def allExplanations 
-      if(o['group-file']) {
-        def groups
-        try {
-          groups = new File(o['group-file']).text.split('\n')
-        } catch(e) {
-          println "Could not handle the --group-file: ${e.toString()}"
-          System.exit(1)
-        }
-
-        allExplanations = k.explainClusters(groups, o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], includeAll)
-      } else if(o['group'] && o['group'] != '*') {
-        allExplanations = k.explainClusters([o['group']], o['scores-only'], o['output-scores'], o['output-type'], threads, o['debug'], includeAll)
-      } else {
-        allExplanations = k.explainAllClusters(o['output-scores'], o['scores-only'], o['output-type'], threads, o['debug'], includeAll)
+    // TODO kind of stupid
+    if(o['group-file']) {
+      try {
+        o['group'] = new File(o['group-file']).text.split('\n')
+      } catch(e) {
+        println "Could not handle the --group-file: ${e.toString()}"
+        System.exit(1)
       }
-
-      if(o['scores-only']) {
-        println "Done."
-        return;
-      }
-
-      def pVals = [:]
-      if(o['perms']) {
-        if(o['egl']) { 
-          println 'Skipping permutation testing because in EGL mode.'
-        } else {
-          pVals = k.permutationTest(allExplanations, excludeClasses, threads, Integer.parseInt(o['perms']))
-        }
-      }
-
-      allExplanations.each {
-        k.output(it.cluster, it.results, pVals[it.cluster], o['egl'], o['output-type'], o['print-members'], o['output'])
-      }
-
-      if(o['output-exp-dataframe']) {
-        k.writeDataframe('train', allExplanations)
-      }
-      
-      if(o['egl']) { 
-        println 'Skipping classification options because in EGL mode.'
-      } else {
-        if(o['reclassify']) {
-          k.reclassify(allExplanations, excludeClasses, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], threads)
-        }
-        if(o['classify']) {
-          k.classify(o['classify'], allExplanations, o['output-classification-scores'], o['ucm'], o['classify-with-variables'], excludeClasses, threads, o) // fuck it just passing o
-        }
-      }
-
-      if(o['output-exp-dataframe']) {
-        k.writeDataframe('test', allExplanations)
-      }
+    } else if(o['group'] =~ ';') {
+      o['group'] = o['group'].tokenize(';')
+    } else if(o['group']) {
+      o['group'] = [o['group']]
     } else {
-      k.genSim(o['output'], o['group'])
+      o['group'] = []
     }
+
+    return o;
   }
 }

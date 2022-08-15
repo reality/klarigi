@@ -39,28 +39,32 @@ public class Klarigi {
     labels: null
   ]
   def coefficients
-  def verbose
   def icFactory
   def scorer
+  def o
 
-  Klarigi(o, excludeClasses, threads) {
-    verbose = o['verbose']
+  Klarigi(o) {
+    this.o = o
 
-    loadOntology(o['ontology'])
-    loadData(o['data'], o['pp'], o['group'], o['egl'], threads)
-    loadIc(o['ic'], o['ontology'], o['data'], o['resnik-ic'], o['save-ic'], o['turtle'], o['pp'], o['show-warnings'])
+    loadOntology()
+    loadData(o['data'])
+    loadIc()
 
     coefficients = Coefficients.Generate(o)
     if(o['egl']) { coefficients['min-exclusion'] = 0 }
 
-    this.scorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, o['egl'], threads)
+    if(o['verbose']) { "[...] Loading scorer (pre-calculation)"}
+    this.scorer = new Scorer(ontoHelper, coefficients, data, o)
+    if(o['verbose']) { "[...] Done loading scorer"}
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
     }
   }
 
-  def loadData(dataFile, pp, interestGroups, egl, threads) {
+  def loadData(dataFile) {
+    if(o['verbose']) { println "[...] Loading dataset" }
+
     def groupings = new ConcurrentHashMap();
     def associations = new ConcurrentHashMap();
     def egroups = new ConcurrentHashMap();
@@ -70,8 +74,8 @@ public class Klarigi {
       if(!inputFile.exists()) { RaiseError("Data file not found. Check --data argument.") }
 
       def input
-      if(pp) { // Phenopackets mode
-        if(verbose) {
+      if(o['pp']) { // Phenopackets mode. TODO: probably just try to figure this out automatically
+        if(o['verbose']) {
           println "Phenopackets input mode engaged"
         }
 
@@ -89,7 +93,7 @@ public class Klarigi {
         // Convert each of the phenopackets to input triples
         input = toProcess.collect { PacketConverter.Convert(PacketConverter.Load(it)) }
 
-        if(verbose) {
+        if(o['verbose']) {
           def outName = "pp_conv.tsv"
           println "Phenopackets loaded. Also saving a converted copy to $outName"
           PacketConverter.Save(input, outName) 
@@ -102,22 +106,23 @@ public class Klarigi {
         }
       }
 
-      GParsPool.withPool(threads) { p ->
+      GParsPool.withPool(o['threads']) { p ->
       input.eachParallel {
         def (entity, terms, group) = it
 
         if(group) {
           def gs = group.tokenize(';')
-          if(egl) {
-            gs = gs.findAll { g -> interestGroups.contains(g) }
-          }
-
-          if(interestGroups) {
-            def anyFalse = false 
-            gs = gs.collect { interestGroups.contains(it) ? it : 'false' }
-            anyFalse = gs.contains('false')
-            gs = gs.findAll { it != 'false' }
-            if(anyFalse) { gs << 'false' } // hey, it's cheaper than uniq
+          
+          if(o['group'].size() > 0) {
+            if(o['egl']) {
+              gs = gs.findAll { g -> o['group'].contains(g) }
+            } else {
+              def anyFalse = false 
+              gs = gs.collect { o['group'].contains(it) ? it : 'false' }
+              anyFalse = gs.contains('false')
+              gs = gs.findAll { it != 'false' }
+              if(anyFalse) { gs << 'false' } // hey, it's cheaper than uniq
+            }
           }
 
           // egroups is a map of each entity to the groups it's associates with
@@ -141,7 +146,7 @@ public class Klarigi {
       }
       }
     } catch(e) {
-      HandleError(e, verbose, "Error loading data file ($dataFile)")
+      HandleError(e, o['verbose'], o['debug'], "Error loading data file ($dataFile)")
     }
 
     egroups.each { e, gs ->
@@ -165,7 +170,7 @@ public class Klarigi {
     }
     def allAssociations = qa.keySet().toList()
 
-    if(verbose) {
+    if(o['verbose']) {
       println "Loaded ${allAssociations.size()} entity-term associations."
     }
 
@@ -177,9 +182,7 @@ public class Klarigi {
       allAssociations: allAssociations
     ]
 
-    if(verbose) {
-      println "Done loading dataset"
-    }
+    if(o['verbose']) { println "[...] Done loading dataset" }
   }
 
   def sampleData() {
@@ -194,41 +197,43 @@ public class Klarigi {
     return newSample
   }
 
-  def loadIc(icFile, ontologyFile, annotFile, resnikIc, saveIc, turtle, pp, showWarnings) {
-    if(icFile) {
+  def loadIc() {
+    if(o['verbose']) { println "[...] Loading information content" }
+
+    if(o['ic']) {
       try {
-      new File(icFile).splitEachLine('\t') {
+      new File(o['ic']).splitEachLine('\t') {
         data.ic[it[0]] = Float.parseFloat(it[1])
       }
       } catch(e) {
-        HandleError(e, verbose, "Error loading information content file ($icFile)")
+        HandleError(e, o['verbose'], o['debug'], "Error loading information content file ($icFile)")
       }
     } else {
       try {
-        icFactory = new InformationContent(ontologyFile, annotFile, resnikIc, turtle, pp)
+        icFactory = new InformationContent(o)
         def allClasses = ontoHelper.reasoner.getSubClasses(ontoHelper.dataFactory.getOWLThing(), false).collect { it.getRepresentativeElement().getIRI().toString() }.unique(false)
         allClasses = allClasses.findAll { it != 'http://www.w3.org/2002/07/owl#Nothing' } // heh
-        data.ic = icFactory.getInformationContent(allClasses, showWarnings)
+        data.ic = icFactory.getInformationContent(allClasses)
       } catch(e) {
-        HandleError(e, verbose, "Error calculating information content values")
+        HandleError(e, o['verbose'], o['debug'], "Error calculating information content values")
       }
     }
 
-    if(verbose) {
-      println "Done loading IC values"
-    }
+    if(o['verbose']) { println "[...] Done loading information content" }
 
-    if(saveIc) {
+    if(o['save-ic']) {
       try {
-        InformationContent.Write(data.ic, saveIc)
+        InformationContent.Write(data.ic, o['save-ic'])
       } catch(e) {
-        HandleError(e, verbose, "Error saving information content values ($saveIc)")
+        HandleError(e, o['verbose'], o['debug'], "Error saving information content values (${o['save-ic']})")
       }
     }
   }
 
   // Load and classify the ontology with Elk
-  def loadOntology(ontologyFile) { 
+  def loadOntology() { 
+    if(o['verbose']) { println "[...] Loading ontology" }
+
     // this is so abs9olutely ridiculous (stolen from stackoverflow somewhere)
     Logger.getLogger(ElkReasoner.class).setLevel(Level.OFF);
     List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
@@ -240,7 +245,7 @@ public class Klarigi {
     try {
       // load ontology
       def manager = OWLManager.createOWLOntologyManager()
-      def ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyFile))
+      def ontology = manager.loadOntologyFromOntologyDocument(new File(o['ontology']))
       //def progressMonitor = new ConsoleProgressMonitor()
       def config = new SimpleConfiguration()
       def elkFactory = new ElkReasonerFactory() // cute
@@ -266,15 +271,13 @@ public class Klarigi {
       ontoHelper.reasoner = elkFactory.createReasoner(ontology, config)
       ontoHelper.labels = labels
     } catch(e) {
-      HandleError(e, verbose, "Error loading of processing the ontology file ($ontologyFile)")
+      HandleError(e, o['verbose'], o['debug'], "Error loading of processing the ontology file (${o['ontology']})")
     }
 
-    if(verbose) {
-      println "Done loading the ontology"
-    }
+    if(o['verbose']) { println "[...] Done loading ontology" }
   }
 
-  def permutationTest(allExplanations, excludeClasses, threads, perms) {
+  def permutationTest(allExplanations, excludeClasses, perms) {
     println "Doing permutation tests... This may take a while..."
     println "Tip: Don't use p-values produced by this process to inform hyperparameter optimisation. Beware multiple testing!"
 
@@ -304,7 +307,7 @@ public class Klarigi {
         terms.keySet().toList()
       }.flatten().unique(false)
 
-      def reScorer = new Scorer(ontoHelper, coefficients, subData, excludeClasses, false, threads, allCandidates)
+      def reScorer = new Scorer(ontoHelper, coefficients, subData, o, allCandidates)
       i++
       if((i % 100) == 0) {
         println i
@@ -312,7 +315,7 @@ public class Klarigi {
      
       ae.each { g, gp ->
         def cSet = ae[g].keySet().toList()
-        def candidates = reScorer.scoreClasses(g, threads, cSet, true)
+        def candidates = reScorer.scoreClasses(g, cSet, true)
 
         candidates.each { v ->
           def k = v.iri
@@ -353,14 +356,14 @@ public class Klarigi {
     ps
   }
 
-  def explainCluster(cid, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
-    def candidates = scorer.scoreAllClasses(cid, threads, includeAll)
+  def explainCluster(cid) {
+    def candidates = scorer.scoreAllClasses(cid, o['include-all'])
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
 
-    if(outputScores) {
+    if(o['output-scores']) {
       try {
-        def fName = false 
+        def fName = false // TODO why isn't this just o['output']? 
         if(outputType == 'latex') {
           Scorer.WriteLaTeX(cid, candidates, ontoHelper.labels, fName)
         } else {
@@ -369,36 +372,37 @@ public class Klarigi {
           println "Output scores to $fName"
         }
       } catch(e) {
-        HandleError(e, verbose, "Error saving information content values.")
+        HandleError(e, o['verbose'], o['debug'], "Error saving information content values.")
       }
     }
 
+    // TODO we should probably separate the interface between univariate and multivariate modes. it's pretty confusing rn
     def res
-    if(!scoreOnly) {
-      res = StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, threads, debug)
+    if(!o['scores-only']) {
+      res = StepDown.RunNewAlgorithm(coefficients, cid, candidates, data, o['threads'], o['debug'])
     } 
 
     return res
   }
 
-  def explainClusters(groups, scoreOnly, outputScores, outputType, threads, debug, includeAll) {
+  def explainClusters(groups) {
     def missing = groups.findAll { g -> !data.groupings.containsKey(g) }
     if(missing.size() != 0) { RaiseError("Groups not found in dataset: " + missing.join(', ')) }
 
     def results = []
 
     groups.each { g ->
-      results << [ cluster: g, results: explainCluster(g, scoreOnly, outputScores, outputType, threads, debug, includeAll) ]
+      results << [ cluster: g, results: explainCluster(g) ]
     }
 
     return results
   }
 
-  def explainAllClusters(outputScores, scoreOnly, outputType, threads, debug, includeAll) {
-    explainClusters(data.groupings.keySet().toList(), scoreOnly, outputScores, outputType, threads, debug, includeAll)
+  def explainAllClusters() {
+    explainClusters(data.groupings.keySet().toList())
   }
 
-  def reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf, threads) {
+  def reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf) {
     if(cwf) { 
       ucm = false
 
@@ -413,17 +417,17 @@ public class Klarigi {
 
       // We rescore to ensure we have the scores for all of our given classes, and to get the new incEnts if we've reloaded data (per classify)
       // TODO this needs to be done even if no CWF on --classify
-      def reScorer = new Scorer(ontoHelper, coefficients, data, excludeClasses, false, threads)
+      def reScorer = new Scorer(ontoHelper, coefficients, data, o)
       def newScores = []
       allExplanations.each { exps ->
-         exps.results[0] = reScorer.scoreClasses(exps.cluster, threads, assoc[exps.cluster], true)
+         exps.results[0] = reScorer.scoreClasses(exps.cluster, assoc[exps.cluster], true)
          exps.results[0].each { t ->
           t.nExclusion = exps.results[2].find { it.iri == t.iri }.nExclusion
          }
       }
     }
 
-    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, threads, ucm)
+    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, o['threads'], ucm)
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
@@ -437,17 +441,17 @@ public class Klarigi {
     }
   }
 
-  def classify(path, allExplanations, outClassScores, ucm, cwf, excludeClasses, threads, o) {
+  def classify(allExplanations) {
     if(o['verbose']) {
-      println "Loading new dataset at $path in order to classify ..."
+      println "Loading new dataset at ${o['classify']} in order to classify ..."
     }
 
     def saveIc = data.ic
-    loadData(path, o['pp'], o['group'], o['egl'], threads)
+    loadData(o['classify'])
     data.ic = saveIc 
     // holding onto ic saves us a bit of time, but this should be looked at again if decide to involve IC in classify scoring.
 
-    reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf, threads)
+    reclassify(allExplanations)
   }
 
   def genSim(toFile, group) {
@@ -459,16 +463,16 @@ public class Klarigi {
     InformationContent.WriteSimilarity(results, toFile)
   }
 
-  def output(cid, results, pVals, egl, outType, printMembers, toFile) {
+  def output(cid, results, pVals) {
     def cSize = data.groupings[cid].size()
-    if(outType) {
+    if(o['output-types']) {
       if(outType == 'latex') {
-        StepDown.PrintLaTeX(cid, results, pVals, egl, ontoHelper.labels, cSize, toFile)
+        StepDown.PrintLaTeX(cid, results, pVals, o['egl'], ontoHelper.labels, cSize, o['output'])
       } else if(outType == 'tsv') {
-        StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, toFile)
+        StepDown.PrintTSV(cid, results, ontoHelper.labels, cSize, o['output'])
       }
     } else {
-      StepDown.Print(cid, results, pVals, egl, ontoHelper.labels, cSize, toFile, data.groupings[cid], printMembers)
+      StepDown.Print(cid, results, pVals, o['egl'], ontoHelper.labels, cSize, o['output'], data.groupings[cid], o['print-members'])
     }
   }
 
@@ -505,9 +509,9 @@ public class Klarigi {
   }
 
   // Exit from Exception
-  static def HandleError(e, verbose, msg) {
-    println msg + ': ' + e.getMessage()
-    if(verbose) {
+  static def HandleError(e, verbose, debug, msg) {
+    println msg + ': ' + e.toString()
+    if(debug) {
       e.printStackTrace()
     }
     System.exit(1)

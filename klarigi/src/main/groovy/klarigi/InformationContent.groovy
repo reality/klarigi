@@ -51,11 +51,11 @@ public class InformationContent {
   private factory
   private G graph
 
-  InformationContent(ontologyPath) {
-    this(ontologyPath, false, false, false)
-  }
+  def o
 
-  InformationContent(ontologyPath, dataPath, annotIC, turtle, pp) {
+  InformationContent(o) {
+    this.o = o
+
     factory = URIFactoryMemory.getSingleton()
 
     /*def graphURI = factory.getURI('http://purl.obolibrary.org/obo/HP_')
@@ -65,10 +65,10 @@ public class InformationContent {
     graph = new GraphMemory()
 
     def dataConf
-    if(turtle) {
-      dataConf = new GDataConf(GFormat.TURTLE, ontologyPath)
+    if(o['turtle']) {
+      dataConf = new GDataConf(GFormat.TURTLE, o['ontology'])
     } else {
-      dataConf = new GDataConf(GFormat.RDF_XML, ontologyPath)
+      dataConf = new GDataConf(GFormat.RDF_XML, o['ontology'])
     }
 
     //def actionRerootConf = new GAction(GActionType.REROOTING)
@@ -78,7 +78,8 @@ public class InformationContent {
     gConf.addGDataConf(dataConf)
 
     def icMeasure = DEFAULT_IC
-    if(annotIC) {
+    def dataPath = o['data']
+    if(o['resnik-ic']) {
       if(pp) {
         dataPath = "pp_conv.tsv"
       } 
@@ -90,21 +91,21 @@ public class InformationContent {
     def roots = new ValidatorDAG().getTaxonomicRoots(graph)
 
     icConf = new IC_Conf_Topo(DEFAULT_IC)
-    if(annotIC) {
+    if(o['resnik-ic']) {
       icConf = new IC_Conf_Corpus(SMConstants.FLAG_IC_ANNOT_RESNIK_1995_NORMALIZED)
     }
 
     engine = new SM_Engine(graph)
   }
 
-  def getInformationContent(cList, showWarnings) {
+  def getInformationContent(cList) {
     def res = [:]
     cList.each { c ->
       try {
         def cTerm = factory.getURI(c)
         res[c] = engine.getIC(icConf, cTerm)
       } catch(e) { 
-        if(showWarnings) {
+        if(o['debug']) {
           println 'Warning: ' + e.getMessage() 
         }
       }
