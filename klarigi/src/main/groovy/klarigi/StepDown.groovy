@@ -25,8 +25,8 @@ public class StepDown {
         }
         if(totalCoverage < (totalInclusionCutoff*100)) {
           totalCoverage = 0
-          if(powerCutoff <= c.BOT_POWER) {
-            powerCutoff = c.TOP_POWER
+          if(powerCutoff <= c.BOT_R_SCORE) {
+            powerCutoff = c.TOP_R_SCORE
 
             if(icCutoff > c.BOT_IC) {
               icCutoff -= c.STEP
@@ -45,14 +45,14 @@ public class StepDown {
       return [ef, 0, candidates] // fail case
     }
 
-    return stepDown(candidates, c.TOP_IC, c.TOP_POWER, c.TOP_TOTAL_INCLUSION)
+    return stepDown(candidates, c.TOP_IC, c.TOP_R_SCORE, c.TOP_OVERALL_INCLUSION)
   }
 
   // We don't use the associations in data.associations, in case we want to use a different
   static def CalculateOI(c, cid, data, candidates, threads, total) {
     def contributingEf = candidates
     if(!total) {
-      contributingEf = contributingEf.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION }
+      contributingEf = contributingEf.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION && it.nPower <= c.MAX_R_SCORE }
     }
     
     def covered = new AtomicInteger(0)

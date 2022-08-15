@@ -45,6 +45,8 @@ public class Klarigi {
 
   Klarigi(o) {
     this.o = o
+    
+    if(o['debug']) { println "Starting with debug mode" }
 
     loadOntology()
     loadData(o['data'])
@@ -108,6 +110,7 @@ public class Klarigi {
       input.eachParallel {
         def (entity, terms, group) = it
 
+        egroups[entity] = []
         if(group) {
           def gs = group.tokenize(';')
           
@@ -147,13 +150,28 @@ public class Klarigi {
       HandleError(e, o['verbose'], o['debug'], "Error loading data file ($dataFile)")
     }
 
-    egroups.each { e, gs ->
+    // We do creation of the maps and population with two separate loops, because otherwise we get some strange behaviour with race conditions. I'm not sure why.
+    def tGroup = new ConcurrentHashMap()
+    GParsPool.withPool(o['threads']) { p ->
+    egroups.eachParallel { e, gs ->
       gs.each { g ->
-        if(!groupings.containsKey(g)) {
-          groupings[g] = []
+        if(!tGroup.containsKey(g)) {
+          tGroup[g] = new ConcurrentHashMap()
         }
-        groupings[g] << e
       }
+    }
+    }
+
+    GParsPool.withPool(o['threads']) { p ->
+    egroups.eachParallel { e, gs ->
+      gs.each { g ->
+        tGroup[g][e] = true
+      }
+    }
+    }
+
+    tGroup.each { k, v ->
+      groupings[k] = v.keySet().toList()
     }
 
     println "Groupings loaded:"
@@ -161,10 +179,12 @@ public class Klarigi {
       println "  $k: ${v.size()} members" 
     }
 
-    // kind of stupid but ok 
-    def qa = [:]
-    associations.each { entity, terms ->
+    // kind of stupid but ok ; also TODO check for race condition
+    def qa = new ConcurrentHashMap()
+    GParsPool.withPool(o['threads']) { p ->
+    associations.eachParallel { entity, terms ->
       terms.keySet().toList().each { qa[it] = true }
+    }
     }
     def allAssociations = qa.keySet().toList()
 
@@ -362,7 +382,7 @@ public class Klarigi {
     if(o['output-scores']) {
       try {
         def fName = false // TODO why isn't this just o['output']? 
-        if(outputType == 'latex') {
+        if(o['output-type'] == 'latex') {
           Scorer.WriteLaTeX(cid, candidates, ontoHelper.labels, fName)
         } else {
           fName = 'scores-'+cid+'.lst'
@@ -370,7 +390,7 @@ public class Klarigi {
           println "Output scores to $fName"
         }
       } catch(e) {
-        HandleError(e, o['verbose'], o['debug'], "Error saving information content values.")
+        HandleError(e, o['verbose'], o['debug'], "Error saving class scores.")
       }
     }
 

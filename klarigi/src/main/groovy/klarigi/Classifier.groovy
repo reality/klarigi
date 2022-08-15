@@ -38,8 +38,7 @@ public class Classifier {
     GParsPool.withPool(threads) { p ->
     data.associations.eachParallel { entity, codes ->
       if(debug) {
-        no.getAndIncrement()
-        if((no % 1000) == 0) {
+        if((no.getAndIncrement() % 1000) == 0) {
           println "[Classify] Processing record $no" 
         }
       }

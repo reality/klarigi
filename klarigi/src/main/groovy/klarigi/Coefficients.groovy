@@ -3,9 +3,9 @@ public class Coefficients {
     TOP_IC: 0.7,
     BOT_IC: 0.4,
 
-    TOP_TOTAL_INCLUSION: 1,
-    TOP_POWER: 0.8,
-    BOT_POWER: 0.1,
+    TOP_OVERALL_INCLUSION: 1,
+    TOP_R_SCORE: 0.7,
+    BOT_R_SCORE: 0.1,
 
     MAX_INCLUSION: 1,
     MAX_EXCLUSION: 1,

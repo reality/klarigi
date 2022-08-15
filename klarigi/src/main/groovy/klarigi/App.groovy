@@ -21,7 +21,7 @@ class App {
 
     // The business
 
-    def allExplanations = o['group'] ? k.explainClusters(o['groups']) : k.explainAllClusters()
+    def allExplanations = o['group'] ? k.explainClusters(o['group']) : k.explainAllClusters()
 
     // We only wanted the scores, so now we exit
     if(o['scores-only']) {
@@ -54,6 +54,7 @@ class App {
     } else {
       if(o['reclassify']) {
         k.reclassify(allExplanations)
+        if(o['debug']) { println "[...] Done with reclassification" }
       }
       if(o['classify']) {
         k.classify(allExplanations)
@@ -97,7 +98,8 @@ class App {
       _ longOpt: 'bot-inclusion', 'Min inclusion to use in stepdown algorithm. Default: 0.3', args: 1
       _ longOpt: 'top-exclusion', 'Max exclusion to use in stepdown algorithm. Default: 0.95', args: 1
       _ longOpt: 'bot-exclusion', 'Min exclusion to use in stepdown algorithm. Default: 0.3', args: 1
-      _ longOpt: 'top-total-inclusion', 'Max total inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
+      _ longOpt: 'top-overall-inclusion', 'Max overall inclusion to use in stepdown algorithm. Default: 0.95 (probably don\'t want to edit this one)', args: 1
+      _ longOpt: 'top-r-score', 'Max r-score to use in stepdown algorithm. Default: 0.8', args: 1
       _ longOpt: 'bot-r-score', 'Min acceptable value of r-score for stepdown algorithm.', args: 1
 
       _ longOpt: 'min-exclusion', 'Candidate restriction: Terms with exclusion below this level will not be considered for explanations.', args: 1
@@ -108,6 +110,7 @@ class App {
       _ longOpt: 'include-all', 'Ignore all min scores', type: Boolean
 
       _ longOpt: 'max-exclusion', 'Variables with exclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
+      _ longOpt: 'max-r-score', 'Variables with r-score higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
       _ longOpt: 'max-inclusion', 'Variables with inclusion higher than this will not count to total overall inclusion in the stepdown algorithm. They will, however, still appear in explanations.', args: 1
 
       _ longOpt: 'step', 'Step by which to reduce coefficients in stepdown algorithm. Default: 0.05', args: 1
