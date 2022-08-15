@@ -5,9 +5,12 @@ import be.cylab.java.roc.*
 import java.util.concurrent.*
 import groovyx.gpars.*
 import groovyx.gpars.GParsPool
+import java.util.concurrent.atomic.*
 
 public class Classifier {
-  static def classify(c, allExplanations, data, ontoHelper, threads, ucm) {
+  static def classify(c, allExplanations, data, ontoHelper, threads, debug, ucm) {
+    
+    if(debug) { println "[Classifier] Inititalising metrics" }
     def metrics = new ConcurrentHashMap()
     data.groupings.each { cid, entities ->
       metrics[cid] = [
@@ -15,7 +18,9 @@ public class Classifier {
         scores: new ConcurrentHashMap()
       ]
     }
+    if(debug) { println "[Classifier] Done inititalising metrics" }
 
+    if(debug) { println "[Classifier] Inititalising sterms and calculating OI" }
     def sterms = [:]
     allExplanations.each { exps ->
       // 0 is the mv exp set, 2 is all candidates (uv)
@@ -25,10 +30,20 @@ public class Classifier {
       def totalCoverage = StepDown.CalculateOI(c, exps.cluster, data, sterms[exps.cluster], threads, true) //.collect { it.iri })
       println "Building classifier for '${exps.cluster}. ${data.associations.size()} total records (${data.groupings[exps.cluster].size()} labelled ${exps.cluster}. Using ${sterms[exps.cluster].size()} terms with OI: $totalCoverage"
     }
+    if(debug) { println "[Classifier] Done inititalising sterms and calculating OI" }
 
+    if(debug) { println "[Classifier] Calculating scores" }
+    def no = new AtomicInteger(0)
     //iterate each entity
     GParsPool.withPool(threads) { p ->
     data.associations.eachParallel { entity, codes ->
+      if(debug) {
+        no.getAndIncrement()
+        if((no % 1000) == 0) {
+          println "[Classify] Processing record $no" 
+        }
+      }
+
       def scores = [:]
       
       // Iterate each group
@@ -54,6 +69,9 @@ public class Classifier {
     }
     }
 
+    if(debug) { println "[Classifier] Done calculating scores" }
+    if(debug) { println "[Classifier] Converting hashmap" }
+
     metrics.each { d, v ->
       v.scores = v.scores.collect { it.getValue() }
       v.truths = v.truths.collect { it.getValue() }
@@ -62,8 +80,9 @@ public class Classifier {
     return metrics
   }
 
-  static def Print(metrics) {
+  static def Print(metrics, debug) {
     metrics.each { cid, m1 ->
+      if(debug) { println "[Classifier] Normalising scores for $cid" }
       def max = m1.scores.max()
       def min = m1.scores.min()
 
@@ -74,7 +93,9 @@ public class Classifier {
           (v - min) / (max - min)
         }
       }
+      if(debug) { println "[Classifier] Done normalising scores for $cid" }
   
+      if(debug) { println "[Classifier] Calculating AUC for $cid" }
       // JAVA
       double[] scar = m1.scores.toArray()
       double[] trar = m1.truths.toArray()

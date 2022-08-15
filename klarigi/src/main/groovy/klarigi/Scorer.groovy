@@ -34,7 +34,9 @@ public class Scorer {
   }
 
   private def precalculateScores() {
+    if(o['verbose']) { "[...] Performing scorer precalculation" }
     precalculateScores(false)
+    if(o['verbose']) { "[...] Done scorer precalculation" }
   }
 
   private def precalculateScores(manToProcess) {
@@ -205,6 +207,7 @@ public class Scorer {
   }
 
   def scoreClasses(cid, classes, returnAll) {
+    if(o['verbose']) { "[...] Scoring ${classes.size()} candidates for $cid"}
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(o['threads']) { p ->
     classes.eachParallel {
@@ -216,6 +219,9 @@ public class Scorer {
 
     // Note, this turns it into a list rather than a hashmap
     explainers = normalise(explainers, cid, returnAll) 
+
+    if(o['verbose']) { "[...] Done scoring for $cid"}
+
     explainers
   }
 

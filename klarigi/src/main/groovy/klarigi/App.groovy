@@ -21,7 +21,7 @@ class App {
 
     // The business
 
-    def allExplanations = o['groups'] ? k.explainClusters(o['groups']) : k.explainAllClusters()
+    def allExplanations = o['group'] ? k.explainClusters(o['groups']) : k.explainAllClusters()
 
     // We only wanted the scores, so now we exit
     if(o['scores-only']) {
@@ -183,6 +183,10 @@ class App {
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
       }
+    }
+
+    if(o['classify-with-variables']) { 
+      o['univariate-classify-mode'] = false
     }
 
     // Otherwise, variables we use to classify may not be scored (and we need their old nExclusion values). Strictly it should probably be on CWV rather than c and re?

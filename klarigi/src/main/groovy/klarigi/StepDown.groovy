@@ -21,7 +21,7 @@ public class StepDown {
         totalCoverage = CalculateOI(c, cid, data, ef, threads, false)
 
         if(debug) {
-          println "DEBUG: running with ic cutoff: $icCutoff exclusion cutoff: $exclusionCutoff inclusion cutoff: $inclusionCutoff total: coverage: $totalCoverage/$totalInclusionCutoff"
+          println "[StepDown][DEBUG] IC: $icCutoff r-score: $powerCutoff coverage: $totalCoverage/$totalInclusionCutoff"
         }
         if(totalCoverage < (totalInclusionCutoff*100)) {
           totalCoverage = 0

@@ -53,9 +53,7 @@ public class Klarigi {
     coefficients = Coefficients.Generate(o)
     if(o['egl']) { coefficients['min-exclusion'] = 0 }
 
-    if(o['verbose']) { "[...] Loading scorer (pre-calculation)"}
     this.scorer = new Scorer(ontoHelper, coefficients, data, o)
-    if(o['verbose']) { "[...] Done loading scorer"}
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
@@ -402,10 +400,8 @@ public class Klarigi {
     explainClusters(data.groupings.keySet().toList())
   }
 
-  def reclassify(allExplanations, excludeClasses, outClassScores, ucm, cwf) {
-    if(cwf) { 
-      ucm = false
-
+  def reclassify(allExplanations) {
+    if(o['classify-with-variables']) { 
       def assoc = [:]
       def allAssoc = []
       new File(cwf).splitEachLine('\t') {
@@ -427,16 +423,16 @@ public class Klarigi {
       }
     }
 
-    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, o['threads'], ucm)
+    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, o['threads'], o['debug'], o['univariate-classify-mode'])
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
 
     println 'Classification performance:'
-    Classifier.Print(m)
+    Classifier.Print(m, o['debug'])
     println ''
 
-    if(outClassScores) {
+    if(o['output-classification-scores']) {
       Classifier.WriteScores(m, "reclassify")
     }
   }

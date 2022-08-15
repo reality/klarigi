@@ -80,7 +80,7 @@ public class InformationContent {
     def icMeasure = DEFAULT_IC
     def dataPath = o['data']
     if(o['resnik-ic']) {
-      if(pp) {
+      if(o['pp']) {
         dataPath = "pp_conv.tsv"
       } 
       gConf.addGDataConf(new GDataConf(GFormat.TSV_ANNOT, dataPath));
