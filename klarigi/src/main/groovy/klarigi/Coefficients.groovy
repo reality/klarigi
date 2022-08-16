@@ -9,6 +9,7 @@ public class Coefficients {
 
     MAX_INCLUSION: 1,
     MAX_EXCLUSION: 1,
+    MAX_R_SCORE: 1,
 
     MIN_INCLUSION: 0,
     MIN_EXCLUSION: 0.05,

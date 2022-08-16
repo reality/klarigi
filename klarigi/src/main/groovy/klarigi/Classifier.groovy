@@ -8,15 +8,14 @@ import groovyx.gpars.GParsPool
 import java.util.concurrent.atomic.*
 
 public class Classifier {
-  static def classify(c, allExplanations, data, ontoHelper, threads, debug, ucm) {
+  static def classify(c, allExplanations, data, threads, debug, ucm) {
     
     if(debug) { println "[Classifier] Inititalising metrics" }
     def metrics = new ConcurrentHashMap()
     data.groupings.each { cid, entities ->
-      metrics[cid] = [
-        truths: new ConcurrentHashMap(),
-        scores: new ConcurrentHashMap()
-      ]
+      metrics[cid] = new ConcurrentHashMap()
+      metrics[cid].truths = new ConcurrentHashMap()
+      metrics[cid].scores = new ConcurrentHashMap()
     }
     if(debug) { println "[Classifier] Done inititalising metrics" }
 
@@ -44,7 +43,6 @@ public class Classifier {
       }
 
       def scores = [:]
-      
       // Iterate each group
       allExplanations.each { exps ->
         // Start from 1
@@ -62,8 +60,8 @@ public class Classifier {
         if(data.egroups[entity].contains(d)) {
           t = 1
         }
-        metrics[d].scores[entity] = v
-        metrics[d].truths[entity] = t
+        metrics[d].scores[entity] = [ v, t ]
+        //metrics[d].truths[entity] = t
       }
     }
     }
@@ -72,8 +70,8 @@ public class Classifier {
     if(debug) { println "[Classifier] Converting hashmap" }
 
     metrics.each { d, v ->
-      v.scores = v.scores.collect { it.getValue() }
-      v.truths = v.truths.collect { it.getValue() }
+      v.truths = v.scores.collect { e, s -> s[1] }
+      v.scores = v.scores.collect { e, s -> s[0] }
     }
 
     return metrics
@@ -81,6 +79,7 @@ public class Classifier {
 
   static def Print(metrics, debug) {
     metrics.each { cid, m1 ->
+      if(cid == 'false') { return; }
       if(debug) { println "[Classifier] Normalising scores for $cid" }
       def max = m1.scores.max()
       def min = m1.scores.min()
@@ -95,10 +94,12 @@ public class Classifier {
       if(debug) { println "[Classifier] Done normalising scores for $cid" }
   
       if(debug) { println "[Classifier] Calculating AUC for $cid" }
-      // JAVA
+      // So this is quite expensive TODO, if we make a mode that we can just save the flaots then we can save us some RAM
       double[] scar = m1.scores.toArray()
       double[] trar = m1.truths.toArray()
-      def roc = new Roc(scar, trar)
+      m1.scores = scar
+      m1.truths = trar
+      def roc = new Roc(m1.scores, m1.truths)
       def auc = roc.computeAUC()
 
       if(!auc.isNaN()) {

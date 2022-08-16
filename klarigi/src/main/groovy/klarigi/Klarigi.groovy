@@ -21,8 +21,10 @@ import org.apache.log4j.LogManager;
 import java.math.MathContext
 
 import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 import groovyx.gpars.*
 import groovyx.gpars.GParsPool
+import java.util.UUID
 
 
 public class Klarigi {
@@ -52,14 +54,19 @@ public class Klarigi {
     loadData(o['data'])
     loadIc()
 
-    coefficients = Coefficients.Generate(o)
-    if(o['egl']) { coefficients['min-exclusion'] = 0 }
-
-    this.scorer = new Scorer(ontoHelper, coefficients, data, o)
+    loadScorer()
 
     if(o['output']) { // blank the output file, since we will subsequently append to it. all the output stuff could probs be better abstracted.
       new File(o['output']).text = ''
     }
+  }
+
+  def loadScorer() {
+    if(o['verbose']) { println "[...] Loading scorer and performing precalculation" }
+    coefficients = Coefficients.Generate(o)
+    if(o['egl']) { coefficients['min-exclusion'] = 0 }
+    this.scorer = new Scorer(ontoHelper, coefficients, data, o)
+    if(o['verbose']) { println "[...] Done precalculating" }
   }
 
   def loadData(dataFile) {
@@ -69,6 +76,8 @@ public class Klarigi {
     def associations = new ConcurrentHashMap();
     def egroups = new ConcurrentHashMap();
     def ic = new ConcurrentHashMap()
+    //def entityCounter = new AtomicInteger(0);
+    //def termMap = new ConcurrentHashMap()
     try {
       def inputFile = new File(dataFile)
       if(!inputFile.exists()) { RaiseError("Data file not found. Check --data argument.") }
@@ -99,18 +108,26 @@ public class Klarigi {
           PacketConverter.Save(input, outName) 
         }
       } else {
+        def eCounter = 0
         input = new File(dataFile).collect { 
           it = it.tokenize('\t') 
           if(it.size() == 2) { it << '' }
+          it[0] = eCounter.toString()
+          eCounter++
           it
         }
       }
-
+      
+      //def tid = new AtomicInteger(0)
       GParsPool.withPool(o['threads']) { p ->
       input.eachParallel {
         def (entity, terms, group) = it
 
+        //entity = tid.getAndIncrement()
+
+        //UUID.nameUUIDFromBytes(entity.getBytes())
         egroups[entity] = []
+
         if(group) {
           def gs = group.tokenize(';')
           
@@ -136,6 +153,11 @@ public class Klarigi {
             terms = terms.collect { 
               'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
             }
+            /*terms.each {
+              if(!termMap.containsKey(it)) {
+                termMap[it] = true
+              }
+            }*/
           }
           if(!associations.containsKey(entity)) {
             associations[entity] = new ConcurrentHashMap()
@@ -375,6 +397,7 @@ public class Klarigi {
   }
 
   def explainCluster(cid) {
+    if(o['verbose']) { println "Scoring classes for $cid" }
     def candidates = scorer.scoreAllClasses(cid, o['include-all'])
 
     println "$cid: Scoring completed. Candidates: ${candidates.size()}"
@@ -433,17 +456,25 @@ public class Klarigi {
 
       // We rescore to ensure we have the scores for all of our given classes, and to get the new incEnts if we've reloaded data (per classify)
       // TODO this needs to be done even if no CWF on --classify
-      def reScorer = new Scorer(ontoHelper, coefficients, data, o)
+
+      // so i think we can replace scorer with rescorer to save some ram here
+      // TODO can we steal the precalc from the previous one to save some time?
+      this.scorer = new Scorer(ontoHelper, coefficients, data, o)
+
       def newScores = []
       allExplanations.each { exps ->
-         exps.results[0] = reScorer.scoreClasses(exps.cluster, assoc[exps.cluster], true)
+         exps.results[0] = scorer.scoreClasses(exps.cluster, assoc[exps.cluster], true)
          exps.results[0].each { t ->
           t.nExclusion = exps.results[2].find { it.iri == t.iri }.nExclusion
          }
       }
+    } else {
+      this.scorer = null
+      System.gc()
+      System.runFinalization()
     }
 
-    def m = Classifier.classify(coefficients, allExplanations, data, ontoHelper, o['threads'], o['debug'], o['univariate-classify-mode'])
+    def m = Classifier.classify(coefficients, allExplanations, data, o['threads'], o['debug'], o['univariate-classify-mode'])
     if(!m) {
       RaiseError("Failed to build reclassifier. There may have been too few examples.")
     }
@@ -453,6 +484,7 @@ public class Klarigi {
     println ''
 
     if(o['output-classification-scores']) {
+      if(o['verbose']) { println "Writing classification scores" }
       Classifier.WriteScores(m, "reclassify")
     }
   }

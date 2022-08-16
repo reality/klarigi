@@ -12,6 +12,7 @@ public class Scorer {
   private def sc
   private def excludeClasses
   private def o
+  private def scMap = [:]
 
   public  def preScore
 
@@ -43,7 +44,6 @@ public class Scorer {
     def ass = new ConcurrentHashMap()
 
     // TODO add excludeclasses here
-    def scMap = [:]
     def toProcess = []
 
     def tp = data.allAssociations
@@ -71,10 +71,9 @@ public class Scorer {
       }
     }
 
-    // can further speed up by cutting out the minimum here
-    // becomes a PITA if you're using --classify-with-variables tho
-    // the point here is that we have excluded searches. every iteration is Business
-    // WTF was I talking about above? I suppose every iteration IS Business.
+    if(!o['include-all']) {
+      toProcess = toProcess.findAll { data.ic[it] >= c.MIN_IC }
+    }
 
     // so we only want one +1 per person per thing
     def i = 0
@@ -167,11 +166,12 @@ public class Scorer {
   }
 
   private def normalise(explainers, cid, returnAll) {
-    explainers.findAll { k, v -> v.nIc }
-      .collect{ k, v -> 
+    GParsPool.withPool(o['threads']) { p ->
+    explainers.findAllParallel { k, v -> v.nIc }
+      .collectParallel{ k, v -> 
         if(o['egl']) { v.nPower = v.nInclusion }
         v 
-      }.findAll { v ->
+      }.findAllParallel { v ->
         if(!returnAll) {
           if(data.groupings.size() > 1) {
             return v.nIc >= c.MIN_IC && 
@@ -185,10 +185,11 @@ public class Scorer {
           true
         }
       }
+    }
   }
-
+/*
   private def findRelevantClasses(relevant, c) {
-		if(relevant.contains(c)) { return; }
+		/*if(relevant.contains(c)) { return; }
     relevant << c
 
 		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
@@ -197,11 +198,11 @@ public class Scorer {
 				def strc = sc.getIRI().toString()
 				findRelevantClasses(relevant, strc)
 			}
-		}
+		
 
-    return relevant
+    relevant += scMap[c]
   }
-
+*/
   def scoreClasses(cid, classes) {
     scoreClasses(cid, classes, false)
   }
@@ -230,16 +231,8 @@ public class Scorer {
   }
 
   def scoreAllClasses(cid, returnAll) {
-    // TODO i think we can use the allclasses?
-    // or perhaps we're only interested in classes in this cluster?
-    def classMap = [:]
-    data.associations.each { k, v -> v.collect { kk, vv -> classMap[kk] = true }}
-    def classList = classMap.collect { k, v -> k }
-
-    def relevant = []
-    classList.each {
-      findRelevantClasses(relevant, it)   
-    }
+    // No point running expensive unique here since we check in processClass whether we already have it
+    def relevant = data.allAssociations.collect { scMap[it] }.flatten()
 
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(o['threads']) { p ->

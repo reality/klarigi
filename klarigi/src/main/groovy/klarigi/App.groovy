@@ -23,6 +23,15 @@ class App {
 
     def allExplanations = o['group'] ? k.explainClusters(o['group']) : k.explainAllClusters()
 
+    System.gc()
+    System.runFinalization ();
+
+    if(!o['ucm'] && !['classify-with-variables']) {
+      allExplanations.each { exps ->
+        exps.results[2] = null
+      }
+    }
+
     // We only wanted the scores, so now we exit
     if(o['scores-only']) {
       println "Done (scores-only)."
@@ -57,6 +66,7 @@ class App {
         if(o['debug']) { println "[...] Done with reclassification" }
       }
       if(o['classify']) {
+        if(o['debug']) { println "[...] Got call for regular classify" }
         k.classify(allExplanations)
 
         if(o['output-exp-dataframe']) {
@@ -64,6 +74,9 @@ class App {
         }
       }
     }
+
+    if(o['debug']) { println "[...] Done with everything?" }
+    System.exit(0)
   }
 
   static def BuildOptions(args) {

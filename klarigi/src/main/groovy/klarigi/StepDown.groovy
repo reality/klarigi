@@ -114,7 +114,7 @@ public class StepDown {
     if(toFile) {
       new File(toFile).text += '\n' + out 
     } else {
-      println out
+      rintln out
     }
 
   }
