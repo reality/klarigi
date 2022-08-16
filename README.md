@@ -2,7 +2,7 @@
 
 This application will derive characteristic and discriminatory explanations for groups 
 of entities described by ontology classes. For example, groups of
-patients described by HPO classes. For more information, please read the [preprint](https://www.biorxiv.org/content/10.1101/2021.06.14.448423v2).
+patients described by HPO classes. For more information, please read the [preprint](https://www.biorxiv.org/content/10.1101/2021.06.14.448423v4).
 
 ## Installation
 
