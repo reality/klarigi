@@ -10,7 +10,7 @@ Here is the most recent [stable release](https://github.com/reality/klarigi/rele
 
 ## Guide
 
-This [tutorial](https://colab.research.google.com/drive/18BxV-mOItKpOu_rtrb1_WSnXeB4YsRYi?usp=sharing) will walk you through how to use Klarigi. You can also run ```klarigi -h``` to see a full list of options and parameters.
+This [tutorial](https://colab.research.google.com/drive/1qQWqD6gOTieuUwsZSGZLW3-WbsZKyGs4?usp=sharing) will walk you through how to use Klarigi. You can also run ```klarigi -h``` to see a full list of options and parameters.
 
 ## Useful Links and Information
 
