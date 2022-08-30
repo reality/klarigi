@@ -14,9 +14,13 @@ public class StepDown {
     def stepDown = { e, icCutoff, powerCutoff, totalInclusionCutoff ->
       while(totalCoverage <= (totalInclusionCutoff*100)) {
 
-        def ef = candidates.findAll {
+        
+        def ef
+        GParsPool.withPool(threads) { p ->
+        ef = candidates.findAllParallel {
           it.nIc >= icCutoff && it.nPower >= powerCutoff
         } 
+        }
 
         totalCoverage = CalculateOI(c, cid, data, ef, threads, false)
 
@@ -52,12 +56,14 @@ public class StepDown {
   static def CalculateOI(c, cid, data, candidates, threads, total) {
     def contributingEf = candidates
     if(!total) {
-      contributingEf = contributingEf.findAll { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION && it.nPower <= c.MAX_R_SCORE }
+      GParsPool.withPool(threads) { p ->
+      contributingEf = contributingEf.findAllParallel { it.nInclusion <= c.MAX_INCLUSION && it.nExclusion <= c.MAX_EXCLUSION && it.nPower <= c.MAX_R_SCORE }
+      }
     }
     
     def covered = new AtomicInteger(0)
     GParsPool.withPool(threads) { p ->
-      data.groupings[cid].each { ee ->
+      data.groupings[cid].eachParallel { ee ->
         if(contributingEf.any { it.incEnts.containsKey(ee) }) {
           covered.getAndIncrement()
         }

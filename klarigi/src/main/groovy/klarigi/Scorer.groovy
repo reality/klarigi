@@ -187,22 +187,7 @@ public class Scorer {
       }
     }
   }
-/*
-  private def findRelevantClasses(relevant, c) {
-		/*if(relevant.contains(c)) { return; }
-    relevant << c
 
-		def ce = ontoHelper.dataFactory.getOWLClass(IRI.create(c))
-		ontoHelper.reasoner.getSuperClasses(ce, false).each { n ->
-			n.getEntities().each { sc ->
-				def strc = sc.getIRI().toString()
-				findRelevantClasses(relevant, strc)
-			}
-		
-
-    relevant += scMap[c]
-  }
-*/
   def scoreClasses(cid, classes) {
     scoreClasses(cid, classes, false)
   }
@@ -232,7 +217,10 @@ public class Scorer {
 
   def scoreAllClasses(cid, returnAll) {
     // No point running expensive unique here since we check in processClass whether we already have it
-    def relevant = data.allAssociations.collect { scMap[it] }.flatten()
+    def relevant
+    GParsPool.withPool(o['threads']) { p ->
+      relevant = data.allAssociations.collectParallel { scMap[it] }.flatten()
+    }
 
     def explainers = new ConcurrentHashMap()
     GParsPool.withPool(o['threads']) { p ->

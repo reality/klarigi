@@ -218,6 +218,7 @@ class App {
         println "Could not handle the --group-file: ${e.toString()}"
         System.exit(1)
       }
+      if(o['verbose']) { println "[...] Loaded ${o['group'].size()} groups from ${o['group-file']}. Ignoring any --group argument." }
     } else if(o['group'] =~ ';') {
       o['group'] = o['group'].tokenize(';')
     } else if(o['group']) {
