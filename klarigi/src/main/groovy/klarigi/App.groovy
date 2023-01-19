@@ -104,6 +104,7 @@ class App {
       g longOpt: 'group', 'The group to explain.', args: 1
       egl longOpt: 'exclusive-group-load', 'If set to true, only the group given in -g will be loaded into the corpus', type: Boolean
       gf longOpt: 'group-file', 'You can pass a file with a list of groups to: one per line. If you do this, the --group argument will be ignored.', args: 1
+      _ longOpt: 'reroot', 'Reroot the information content graph to the given class. You may have to do this if e.g. there is a problem with with graph cycles', args:1
 
       _ longOpt: 'top-ic', 'Max IC to use in stepdown algorithm. Default: 0.8', args: 1
       _ longOpt: 'bot-ic', 'Min IC to use in stepdown algorithm. Default: 0.4', args: 1

@@ -71,9 +71,6 @@ public class InformationContent {
       dataConf = new GDataConf(GFormat.RDF_XML, o['ontology'])
     }
 
-    //def actionRerootConf = new GAction(GActionType.REROOTING)
-    //actionRerootConf.addParameter("root_uri", "http://purl.obolibrary.org/obo/HP_0000001"); // phenotypic abnormality
-
     def gConf = new GraphConf()
     gConf.addGDataConf(dataConf)
 
@@ -85,7 +82,12 @@ public class InformationContent {
       } 
       gConf.addGDataConf(new GDataConf(GFormat.TSV_ANNOT, dataPath));
     }
-    //gConf.addGAction(actionRerootConf)
+
+    if(o['reroot']) {
+      def actionRerootConf = new GAction(GActionType.REROOTING)
+      actionRerootConf.addParameter("root_uri", o['reroot'])
+      gConf.addGAction(actionRerootConf)
+    }
 
     GraphLoaderGeneric.load(gConf, graph)
     def roots = new ValidatorDAG().getTaxonomicRoots(graph)
