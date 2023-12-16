@@ -11,6 +11,7 @@ public class Scorer {
   private def c 
   private def sc
   private def excludeClasses
+  private def includeOnlyClasses
   private def o
   private def scMap = [:]
 
@@ -31,6 +32,7 @@ public class Scorer {
     this.data = data
     this.c = coefficients
     this.excludeClasses = extendExcludeClasses(o['exclude-classes'])
+    this.includeOnlyClasses = extendExcludeClasses(o['include-only-classes'])
     this.o = o
   }
 
@@ -106,6 +108,7 @@ public class Scorer {
   // @Param c String class IRI
   private def processClass(explainers, cid, c) {
     if(excludeClasses.contains(c)) { return; }
+    if(includeOnlyClasses && !includeOnlyClasses.contains(c)) { return; }
 		if(explainers.containsKey(c)) { return; } // Skip if we already have have a result for this class.
     if(!this.preScore.containsKey(c)) { return; } // For example, if it's in a list we're asking about but not in the dataset, because of permutation sampling
 

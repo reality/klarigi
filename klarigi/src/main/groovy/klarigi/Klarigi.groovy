@@ -49,6 +49,8 @@ public class Klarigi {
     this.o = o
     
     if(o['debug']) { println "Starting with debug mode" }
+    if(o['debug']) { println o }
+    if(o['debug']) { println o['egl'] }
 
     loadOntology()
     loadData(o['data'])

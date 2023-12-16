@@ -95,14 +95,15 @@ class App {
       o longOpt: 'ontology', 'The ontology to use for explanations (should be the same as the ontology used to describe patients).', args: 1
       _ longOpt: 'turtle', 'Indicates that the ontology is a Turtle ontology (needed for calculating IC...)', type: Boolean
 
-      _ longOpt: 'exclude-classes', 'A semi-colon delimited list of IRIs to exclude from scoring (and thus inclusion in explanations). Their subclasses will also be discluded.', args: 1
+      _ longOpt: 'exclude-classes', 'A semi-colon delimited list of IRIs/Curies to exclude from scoring (and thus inclusion in explanations). Their subclasses will also be discluded.', args: 1
+      _ longOpt: 'include-only-classes', 'A semi-colon delimited list of IRIs/Curies for which only those classes and their subclasses will be included in scoring.', args: 1
 
       ri longOpt: 'resnik-ic', 'Use Resnik annotation frequency for information content calculation', type: Boolean
       ic longOpt: 'ic', 'List of classes and associated information content values.', args: 1
       _ longOpt: 'save-ic', 'Save the IC values to the given file', args:1
 
       g longOpt: 'group', 'The group to explain.', args: 1
-      egl longOpt: 'exclusive-group-load', 'If set to true, only the group given in -g will be loaded into the corpus', type: Boolean
+      _ longOpt: 'egl', 'If set to true, only the group given in -g will be loaded into the corpus', type: Boolean
       gf longOpt: 'group-file', 'You can pass a file with a list of groups to: one per line. If you do this, the --group argument will be ignored.', args: 1
       _ longOpt: 'reroot', 'Reroot the information content graph to the given class. You may have to do this if e.g. there is a problem with with graph cycles', args:1
 
@@ -197,6 +198,15 @@ class App {
       o['exclude-classes'] = o['exclude-classes'].tokenize(';')
       if(o['exclude-classes'].size() > 0 && o['exclude-classes'][0] =~ /:/ && o['exclude-classes'][0].indexOf('http') == -1) { // stupid
           o['exclude-classes'] = o['exclude-classes'].collect { 
+            'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
+          }
+      }
+    }
+
+    if(o['include-only-classes']) {
+      o['include-only-classes'] = o['include-only-classes'].tokenize(';')
+      if(o['include-only-classes'].size() > 0 && o['include-only-classes'][0] =~ /:/ && o['include-only-classes'][0].indexOf('http') == -1) { // stupid
+          o['include-only-classes'] = o['include-only-classes'].collect { 
             'http://purl.obolibrary.org/obo/' + it.replace(':', '_')
           }
       }
